@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register New Face - SmartMonitor Pro</title>
+    <link rel="stylesheet" href="/static/premium-elite.css">
+    <style>
+        .register-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .register-container {
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+            animation: slideInUp 1s ease;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .register-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .register-header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .form-card {
+            background: rgba(26, 31, 58, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 1.5rem;
+            padding: 3rem;
+            animation: scaleIn 0.8s ease;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(99, 102, 241, 0.4);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            background: rgba(99, 102, 241, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .upload-area:hover::before {
+            opacity: 1;
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.25);
+        }
+
+        .upload-area.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .upload-text {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 2px solid rgba(99, 102, 241, 0.2);
+            animation: scaleIn 0.4s ease;
+            transition: all 0.3s ease;
+        }
+
+        .preview-item:hover {
+            border-color: #6366f1;
+            transform: scale(1.05);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+            font-weight: 700;
+        }
+
+        .preview-item:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .progress-section {
+            display: none;
+            margin-top: 1.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .progress-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .form-actions button {
+            flex: 1;
+        }
+
+        .tips-box {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-left: 4px solid #6366f1;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .tips-box h3 {
+            color: #6366f1;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .tips-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tips-box li {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .tips-box li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .message {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            animation: slideInDown 0.5s ease;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-left: 4px solid #10b981;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                <span>🚀</span>
+                <span>SmartMonitor</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link">Dashboard</a></li>
+                <li><a href="/history" class="nav-link">History</a></li>
+                <li><a href="/register" class="nav-link active">Register</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Register Section -->
+    <section class="register-section">
+        <div class="register-container">
+            <!-- Header -->
+            <div class="register-header">
+                <h1 class="gradient-text">📸 Register New Face</h1>
+                <p>Add a user to the AI-powered monitoring system</p>
+            </div>
+
+            <!-- Form Card -->
+            <div class="form-card">
+                <!-- Tips -->
+                <div class="tips-box">
+                    <h3>💡 Best Practices</h3>
+                    <ul>
+                        <li>Upload in good natural lighting</li>
+                        <li>Clear frontal face images work best</li>
+                        <li>Multiple angles improve recognition accuracy</li>
+                        <li>Avoid photos with heavy shadows or obstructions</li>
+                    </ul>
+                </div>
+
+                <!-- Messages -->
+                <div id="successMessage" class="message success"></div>
+                <div id="errorMessage" class="message error"></div>
+
+                <!-- Registration Form -->
+                <form id="registerForm">
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label for="studentName">👤 Full Name</label>
+                        <input 
+                            type="text" 
+                            id="studentName" 
+                            name="name" 
+                            placeholder="Enter user's full name" 
+                            required
+                        >
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="studentEmail">📧 Email (Optional)</label>
+                        <input 
+                            type="email" 
+                            id="studentEmail" 
+                            name="email" 
+                            placeholder="Enter email address"
+                        >
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group">
+                        <label for="studentPhone">📱 Phone (Optional)</label>
+                        <input 
+                            type="tel" 
+                            id="studentPhone" 
+                            name="phone" 
+                            placeholder="Enter phone number"
+                        >
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label>📸 Upload Face Images</label>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Drop images here or click to upload</div>
+                            <div class="upload-hint">JPG, PNG, WebP (max 5MB each)</div>
+                            <input type="file" id="imageUpload" multiple accept="image/*" style="display: none;">
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="preview-grid" id="previewGrid" style="display: none;"></div>
+
+                        <!-- Progress -->
+                        <div class="progress-section" id="progressContainer">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <div class="progress-text">Uploading images...</div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <a href="/" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <span>✅</span>
+                            <span>Register User</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageUpload = document.getElementById('imageUpload');
+        const previewGrid = document.getElementById('previewGrid');
+        const form = document.getElementById('registerForm');
+        let selectedFiles = [];
+
+        // Drag and drop
+        uploadArea.addEventListener('click', () => imageUpload.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        imageUpload.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        function handleFiles(files) {
+            selectedFiles = files.filter(f => f.type.startsWith('image/'));
+            updatePreview();
+        }
+
+        function updatePreview() {
+            if (selectedFiles.length > 0) {
+                previewGrid.innerHTML = '';
+                previewGrid.style.display = 'grid';
+                
+                selectedFiles.forEach((file, idx) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const item = document.createElement('div');
+                        item.className = 'preview-item';
+                        item.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview ${idx + 1}">
+                            <button type="button" class="remove-btn" onclick="removeFile(${idx})">✕</button>
+                        `;
+                        previewGrid.appendChild(item);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                previewGrid.style.display = 'none';
+            }
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            updatePreview();
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (selectedFiles.length === 0) {
+                showError('Please select at least one image');
+                return;
+            }
+
+            const name = document.getElementById('studentName').value;
+            if (!name) {
+                showError('Please enter a name');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', document.getElementById('studentEmail').value || '');
+            formData.append('phone', document.getElementById('studentPhone').value || '');
+
+            selectedFiles.forEach((file, idx) => {
+                formData.append(`image_${idx}`, file);
+            });
+
+            try {
+                document.getElementById('progressContainer').style.display = 'block';
+                
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                document.getElementById('progressContainer').style.display = 'none';
+
+                if (response.ok) {
+                    showSuccess(`✅ Successfully registered ${name}!`);
+                    form.reset();
+                    selectedFiles = [];
+                    updatePreview();
+                    setTimeout(() => location.href = '/', 2500);
+                } else {
+                    showError('Registration failed. Please try again.');
+                }
+            } catch (err) {
+                document.getElementById('progressContainer').style.display = 'none';
+                showError('Error: ' + err.message);
+            }
+        });
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+    </script>
+</body>
+</html>

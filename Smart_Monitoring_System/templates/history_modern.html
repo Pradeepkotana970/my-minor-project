@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance History - Smart Monitoring System</title>
+    <link rel="stylesheet" href="/static/modern-style.css">
+    <style>
+        .history-container {
+            max-width: 1000px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            color: #cbd5e1;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 0.5rem;
+            color: white;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .filter-btn {
+            align-self: flex-end;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            animation: slideInUp 0.6s ease 0.2s both;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        thead {
+            background: rgba(99, 102, 241, 0.1);
+            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: #cbd5e1;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            color: #cbd5e1;
+        }
+
+        tbody tr {
+            transition: var(--transition);
+        }
+
+        tbody tr:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .status-present {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-absent {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-late {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-text {
+            color: #94a3b8;
+            margin-bottom: 1rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination button,
+        .pagination a {
+            padding: 0.5rem 1rem;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+            border-radius: 0.35rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .pagination button:hover,
+        .pagination a:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: #6366f1;
+        }
+
+        .pagination button.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .export-btn {
+            margin-bottom: 2rem;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-mini {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            text-align: center;
+        }
+
+        .stat-mini-label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-mini-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                <span>🚀</span>
+                <span>SmartMonitor</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link">Dashboard</a></li>
+                <li><a href="/history" class="nav-link active">History</a></li>
+                <li><a href="/register" class="nav-link">Register</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Section -->
+    <section class="section">
+        <div class="container history-container">
+            <h1 style="color: white; margin-bottom: 1rem; font-size: 2rem;">📜 Attendance History</h1>
+            <p style="color: #94a3b8; margin-bottom: 2rem;">View and manage attendance records</p>
+
+            <!-- Statistics -->
+            <div class="stats-row">
+                <div class="stat-mini">
+                    <div class="stat-mini-label">Total Records</div>
+                    <div class="stat-mini-value" id="totalRecords">-</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-label">This Month</div>
+                    <div class="stat-mini-value" id="monthRecords">-</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-label">Today</div>
+                    <div class="stat-mini-value" id="todayRecords">-</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-label">Attendance Rate</div>
+                    <div class="stat-mini-value" id="attendanceRate">-</div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Filter by Date</label>
+                    <input type="date" id="filterDate">
+                </div>
+                <div class="filter-group">
+                    <label>Filter by Name</label>
+                    <input type="text" id="filterName" placeholder="Enter name...">
+                </div>
+                <div class="filter-group">
+                    <label>Filter by Status</label>
+                    <select id="filterStatus">
+                        <option value="">All Status</option>
+                        <option value="present">✅ Present</option>
+                        <option value="absent">❌ Absent</option>
+                        <option value="late">⏱️ Late</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary filter-btn" onclick="applyFilters()">🔍 Filter</button>
+            </div>
+
+            <!-- Export Button -->
+            <div class="export-btn">
+                <button class="btn btn-secondary" onclick="exportToCSV()">📥 Export as CSV</button>
+            </div>
+
+            <!-- Table -->
+            <div class="table-wrapper">
+                <table id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>👤 Name</th>
+                            <th>📅 Date</th>
+                            <th>⏰ Time</th>
+                            <th>📍 Status</th>
+                            <th>💬 Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr style="text-align: center; color: #94a3b8;">
+                            <td colspan="5">Loading records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+        let allRecords = [];
+        let currentPage = 1;
+        const recordsPerPage = 10;
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/attendance_history');
+                const data = await response.json();
+                allRecords = data.records || [];
+                
+                document.getElementById('totalRecords').textContent = allRecords.length;
+                document.getElementById('monthRecords').textContent = allRecords.filter(r => {
+                    const date = new Date(r.date);
+                    const now = new Date();
+                    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                }).length;
+                document.getElementById('todayRecords').textContent = allRecords.filter(r => {
+                    const date = new Date(r.date);
+                    const today = new Date();
+                    return date.toDateString() === today.toDateString();
+                }).length;
+
+                const presentCount = allRecords.filter(r => r.status === 'present').length;
+                const rate = allRecords.length > 0 ? Math.round((presentCount / allRecords.length) * 100) : 0;
+                document.getElementById('attendanceRate').textContent = rate + '%';
+
+                displayTable();
+            } catch (err) {
+                console.error('Error loading history:', err);
+            }
+        }
+
+        function displayTable(records = allRecords) {
+            const tbody = document.getElementById('tableBody');
+            
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr style="text-align: center; color: #94a3b8;"><td colspan="5">No records found</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = start + recordsPerPage;
+            const pageRecords = records.slice(start, end);
+
+            tbody.innerHTML = pageRecords.map(record => `
+                <tr>
+                    <td>${record.name || 'Unknown'}</td>
+                    <td>${formatDate(record.date)}</td>
+                    <td>${record.time || '-'}</td>
+                    <td><span class="status-badge status-${record.status}">${getStatusIcon(record.status)} ${record.status.toUpperCase()}</span></td>
+                    <td>${record.duration || '-'}</td>
+                </tr>
+            `).join('');
+
+            // Pagination
+            const totalPages = Math.ceil(records.length / recordsPerPage);
+            const paginationHtml = [];
+            
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHtml.push(`
+                    <button ${i === currentPage ? 'class="active"' : ''} onclick="currentPage = ${i}; displayTable(allRecords)">
+                        ${i}
+                    </button>
+                `);
+            }
+            
+            document.getElementById('pagination').innerHTML = paginationHtml.join('');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function getStatusIcon(status) {
+            const icons = { present: '✅', absent: '❌', late: '⏱️' };
+            return icons[status] || '-';
+        }
+
+        function applyFilters() {
+            const date = document.getElementById('filterDate').value;
+            const name = document.getElementById('filterName').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+
+            let filtered = allRecords;
+
+            if (date) {
+                filtered = filtered.filter(r => r.date === date);
+            }
+
+            if (name) {
+                filtered = filtered.filter(r => (r.name || '').toLowerCase().includes(name));
+            }
+
+            if (status) {
+                filtered = filtered.filter(r => r.status === status);
+            }
+
+            currentPage = 1;
+            displayTable(filtered);
+        }
+
+        function exportToCSV() {
+            const headers = ['Name', 'Date', 'Time', 'Status', 'Duration'];
+            const rows = allRecords.map(r => [
+                r.name || 'Unknown',
+                r.date || '',
+                r.time || '-',
+                r.status || '',
+                r.duration || '-'
+            ]);
+
+            const csv = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'attendance_history.csv';
+            a.click();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadHistory);
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadHistory, 10000);
+    </script>
+</body>
+</html>

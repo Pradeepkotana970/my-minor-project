@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - SmartMonitor Pro</title>
+    <link rel="stylesheet" href="/static/premium-elite.css">
+    <link rel="stylesheet" href="/static/advanced-features.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                <span>🚀</span>
+                <span>SmartMonitor</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link">Dashboard</a></li>
+                <li><a href="/alerts" class="nav-link">Alerts</a></li>
+                <li><a href="/settings" class="nav-link active">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Settings Section -->
+    <section class="section">
+        <div class="settings-container">
+            <h1 class="section-title">⚙️ System Settings</h1>
+            <p class="section-subtitle">Configure monitoring and alert preferences</p>
+
+            <!-- Alert System -->
+            <div class="settings-section">
+                <h3>🔔 Alert System</h3>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Alert Sounds</strong>
+                        <small>Enable audio alerts for detected behaviors</small>
+                    </div>
+                    <div class="toggle-switch" id="alertSoundToggle" onclick="toggleSetting('alertSound', this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Drowsiness Detection</strong>
+                        <small>Alert when person appears drowsy</small>
+                    </div>
+                    <div class="toggle-switch" id="drowsinessToggle" onclick="toggleSetting('drowsiness', this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Sleep Detection</strong>
+                        <small>Alert when person appears to be sleeping</small>
+                    </div>
+                    <div class="toggle-switch" id="sleepToggle" onclick="toggleSetting('sleep', this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Phone Vibration Alert</strong>
+                        <small>Send 3-second vibration alert to registered phone</small>
+                    </div>
+                    <div class="toggle-switch" id="vibrationToggle" onclick="toggleSetting('vibration', this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Unknown Person Alert</strong>
+                        <small>Alert when unregistered person is detected</small>
+                    </div>
+                    <div class="toggle-switch" id="unknownAlertToggle" onclick="toggleSetting('unknownAlert', this)"></div>
+                </div>
+            </div>
+
+            <!-- Daily Reports -->
+            <div class="settings-section">
+                <h3>📊 Daily Reports</h3>
+                
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
+                    <div class="setting-label" style="width: 100%;">
+                        <strong>Send Daily Report</strong>
+                        <small>Receive daily attendance summary</small>
+                    </div>
+                    <div style="display: flex; gap: 1rem; width: 100%; margin-top: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary);">
+                            <input type="radio" name="reportType" value="email" checked>
+                            📧 Email
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary);">
+                            <input type="radio" name="reportType" value="sms">
+                            📱 SMS
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary);">
+                            <input type="radio" name="reportType" value="both">
+                            Both
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Report Time</label>
+                    <input type="time" id="reportTime" value="18:00">
+                </div>
+
+                <div class="form-group">
+                    <label>Report Recipients (Add multiple)</label>
+                    <input type="email" id="reportEmail" placeholder="email@example.com" style="margin-bottom: 0.5rem;">
+                    <button class="btn btn-sm btn-primary" onclick="addRecipient('email')" style="width: 100%;">Add Email</button>
+                </div>
+
+                <div id="emailList" style="margin-top: 1rem;"></div>
+
+                <div class="form-group">
+                    <label>Phone Numbers for SMS</label>
+                    <input type="tel" id="reportPhone" placeholder="+1 (555) 123-4567" style="margin-bottom: 0.5rem;">
+                    <button class="btn btn-sm btn-primary" onclick="addRecipient('phone')" style="width: 100%;">Add Phone</button>
+                </div>
+
+                <div id="phoneList" style="margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Behavioral Analysis -->
+            <div class="settings-section">
+                <h3>🧠 Behavioral Analysis</h3>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Track Drowsiness Levels</strong>
+                        <small>Monitor eye closure patterns</small>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSetting('trackDrowsiness', this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Track Yawning</strong>
+                        <small>Detect and log yawning behavior</small>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSetting('trackYawning', this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Head Pose Detection</strong>
+                        <small>Track if person is looking away</small>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSetting('headPose', this)"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <strong>Emotion Recognition</strong>
+                        <small>Detect stress, confusion, fatigue</small>
+                    </div>
+                    <div class="toggle-switch" onclick="toggleSetting('emotion', this)"></div>
+                </div>
+            </div>
+
+            <!-- Alert Thresholds -->
+            <div class="settings-section">
+                <h3>⏱️ Alert Thresholds</h3>
+                
+                <div class="form-group">
+                    <label>Drowsiness Alert (seconds)</label>
+                    <input type="number" id="drowsinessThreshold" value="5" min="1" max="30">
+                </div>
+
+                <div class="form-group">
+                    <label>Sleep Alert (seconds)</label>
+                    <input type="number" id="sleepThreshold" value="10" min="1" max="60">
+                </div>
+
+                <div class="form-group">
+                    <label>Alert Sound Duration (seconds)</label>
+                    <input type="number" id="alertDuration" value="3" min="1" max="10">
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Vibration Duration (seconds)</label>
+                    <input type="number" id="vibrationDuration" value="3" min="1" max="10">
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 2rem;" onclick="saveSettings()">
+                💾 Save All Settings
+            </button>
+
+            <!-- Success Message -->
+            <div id="settingsSuccess" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border-left: 4px solid #10b981; border-radius: 0.5rem; animation: slideInUp 0.3s ease;">
+                ✅ Settings saved successfully!
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let emailRecipients = [];
+        let phoneRecipients = [];
+
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', loadSettings);
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+                
+                // Apply settings to toggles
+                document.getElementById('alertSoundToggle').classList.toggle('active', settings.alertSound);
+                document.getElementById('drowsinessToggle').classList.toggle('active', settings.drowsiness);
+                document.getElementById('sleepToggle').classList.toggle('active', settings.sleep);
+                document.getElementById('vibrationToggle').classList.toggle('active', settings.vibration);
+                document.getElementById('unknownAlertToggle').classList.toggle('active', settings.unknownAlert);
+                
+                document.getElementById('reportTime').value = settings.reportTime || '18:00';
+                document.getElementById('drowsinessThreshold').value = settings.drowsinessThreshold || 5;
+                document.getElementById('sleepThreshold').value = settings.sleepThreshold || 10;
+                document.getElementById('alertDuration').value = settings.alertDuration || 3;
+                document.getElementById('vibrationDuration').value = settings.vibrationDuration || 3;
+                
+                emailRecipients = settings.emailRecipients || [];
+                phoneRecipients = settings.phoneRecipients || [];
+                updateRecipientLists();
+            } catch (err) {
+                console.error('Error loading settings:', err);
+            }
+        }
+
+        function toggleSetting(setting, element) {
+            element.classList.toggle('active');
+        }
+
+        function addRecipient(type) {
+            if (type === 'email') {
+                const email = document.getElementById('reportEmail').value.trim();
+                if (email && !emailRecipients.includes(email)) {
+                    emailRecipients.push(email);
+                    document.getElementById('reportEmail').value = '';
+                    updateRecipientLists();
+                }
+            } else if (type === 'phone') {
+                const phone = document.getElementById('reportPhone').value.trim();
+                if (phone && !phoneRecipients.includes(phone)) {
+                    phoneRecipients.push(phone);
+                    document.getElementById('reportPhone').value = '';
+                    updateRecipientLists();
+                }
+            }
+        }
+
+        function removeRecipient(type, index) {
+            if (type === 'email') earthRecipients.splice(index, 1);
+            else if (type === 'phone') phoneRecipients.splice(index, 1);
+            updateRecipientLists();
+        }
+
+        function updateRecipientLists() {
+            document.getElementById('emailList').innerHTML = emailRecipients.map((email, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(99, 102, 241, 0.1); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                    <span>${email}</span>
+                    <button onclick="removeRecipient('email', ${idx})" class="btn btn-sm btn-danger">Remove</button>
+                </div>
+            `).join('');
+
+            document.getElementById('phoneList').innerHTML = phoneRecipients.map((phone, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(99, 102, 241, 0.1); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                    <span>${phone}</span>
+                    <button onclick="removeRecipient('phone', ${idx})" class="btn btn-sm btn-danger">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        async function saveSettings() {
+            const settings = {
+                alertSound: document.getElementById('alertSoundToggle').classList.contains('active'),
+                drowsiness: document.getElementById('drowsinessToggle').classList.contains('active'),
+                sleep: document.getElementById('sleepToggle').classList.contains('active'),
+                vibration: document.getElementById('vibrationToggle').classList.contains('active'),
+                unknownAlert: document.getElementById('unknownAlertToggle').classList.contains('active'),
+                reportTime: document.getElementById('reportTime').value,
+                reportType: document.querySelector('input[name="reportType"]:checked').value,
+                drowsinessThreshold: parseInt(document.getElementById('drowsinessThreshold').value),
+                sleepThreshold: parseInt(document.getElementById('sleepThreshold').value),
+                alertDuration: parseInt(document.getElementById('alertDuration').value),
+                vibrationDuration: parseInt(document.getElementById('vibrationDuration').value),
+                emailRecipients,
+                phoneRecipients
+            };
+
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                if (response.ok) {
+                    const success = document.getElementById('settingsSuccess');
+                    success.style.display = 'block';
+                    setTimeout(() => success.style.display = 'none', 3000);
+                }
+            } catch (err) {
+                alert('Error saving settings: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

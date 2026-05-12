@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartMonitor Pro — AI Dashboard</title>
+    <meta name="description" content="AI-Powered Smart Monitoring System with real-time face recognition">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0a0e27;
+            --surface: rgba(255,255,255,0.04);
+            --surface-2: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.1);
+            --primary: #6366f1;
+            --primary-glow: rgba(99,102,241,0.25);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --cyan: #06b6d4;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 15% 40%, rgba(99,102,241,0.15) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 10%, rgba(6,182,212,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(16,185,129,0.08) 0%, transparent 45%);
+        }
+
+        /* ── Nav ── */
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2rem;
+            background: rgba(10,14,39,0.85);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 200;
+        }
+        .brand { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg,#6366f1,#10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 0.5rem; list-style: none; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s; }
+        .nav-links a:hover { color: var(--text); background: var(--surface-2); }
+        .nav-links a.active { color: var(--primary); background: rgba(99,102,241,0.1); }
+        .live-dot { display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 6px; animation: blink 1.5s ease-in-out infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 3rem 2rem 2rem;
+            max-width: 1200px; margin: 0 auto;
+        }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; line-height: 1.1; }
+        .hero h1 span { background: linear-gradient(135deg,#6366f1,#06b6d4,#10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--text-muted); margin-top: 0.75rem; font-size: 1.05rem; max-width: 560px; }
+        .hero-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+        .btn {
+            padding: 0.7rem 1.4rem; border-radius: 10px; border: none; cursor: pointer;
+            font-family: inherit; font-size: 0.9rem; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #5254d4; transform: translateY(-1px); box-shadow: 0 8px 24px var(--primary-glow); }
+        .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--surface-2); border-color: var(--primary); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #0da672; transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-1px); }
+
+        /* ── Stats grid ── */
+        .section { max-width: 1200px; margin: 0 auto; padding: 0 2rem 2.5rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 1.4rem 1.5rem; position: relative; overflow: hidden;
+            transition: all 0.25s;
+        }
+        .stat-card:hover { background: var(--surface-2); border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg,var(--primary),var(--cyan)); }
+        .stat-icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
+        .stat-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+        .stat-value { font-size: 2.2rem; font-weight: 800; margin: 0.2rem 0; }
+        .stat-value.green { color: var(--success); }
+        .stat-value.blue { color: var(--cyan); }
+        .stat-value.purple { color: var(--primary); }
+        .stat-value.amber { color: var(--warning); }
+
+        /* ── Content grid ── */
+        .content-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; margin-top: 1.5rem; }
+        @media(max-width:900px) { .content-grid { grid-template-columns: 1fr; } }
+
+        /* ── Video card ── */
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; overflow: hidden;
+        }
+        .card-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .card-header h2 { font-size: 1rem; font-weight: 700; }
+        .card-body { padding: 1.25rem 1.5rem; }
+        .live-badge { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+
+        .video-wrap { background: #000; border-radius: 10px; overflow: hidden; position: relative; }
+        #videoStream { width: 100%; display: block; min-height: 320px; object-fit: contain; }
+        .video-placeholder {
+            min-height: 320px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: var(--text-muted); gap: 0.5rem;
+        }
+        #videoPlaceholder { display:none; position:absolute; inset:0; background:rgba(0,0,0,0.7); }
+
+        /* ── Sidebar ── */
+        .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+        .quick-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+        .quick-actions .btn { width: 100%; justify-content: flex-start; padding: 0.8rem 1rem; }
+
+        .chart-wrap { padding: 0.5rem; }
+        canvas { width: 100% !important; max-height: 220px; }
+
+        /* ── Alert ── */
+        .unknown-alert {
+            display: none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.5rem;
+            display: none; align-items: center; gap: 1rem;
+        }
+        .unknown-alert .alert-icon { font-size: 1.8rem; }
+        .unknown-alert strong { display: block; color: var(--danger); }
+        .unknown-alert p { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* ── Recent list ── */
+        .recent-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto; }
+        .recent-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; background: var(--surface-2); border-radius: 8px; font-size: 0.88rem; }
+        .recent-item .name { font-weight: 600; }
+        .recent-item .time { color: var(--text-muted); font-size: 0.78rem; }
+        .badge { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+        .badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 2rem; right: 2rem; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.5rem;
+            font-size: 0.9rem; font-weight: 500; transform: translateY(100px);
+            transition: transform 0.35s ease; z-index: 999; max-width: 320px;
+        }
+        #toast.show { transform: translateY(0); }
+        #toast.success { border-color: rgba(16,185,129,0.4); color: var(--success); }
+        #toast.error { border-color: rgba(239,68,68,0.4); color: var(--danger); }
++
++        /* ── Profile Grid ── */
++        .profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem; }
++        .profile-card {
++            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
++            padding: 1.25rem; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;
++        }
++        .profile-card:hover { background: var(--surface-2); border-color: var(--primary); transform: translateY(-2px); }
++        .profile-avatar {
++            width: 50px; height: 50px; border-radius: 12px; background: var(--primary);
++            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: white;
++        }
++        .profile-info h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.1rem; }
++        .profile-info p { font-size: 0.75rem; color: var(--text-muted); }
++
++        /* ── Analytics Grid ── */
++        .analytics-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
++        @media(max-width:900px) { .analytics-grid { grid-template-columns: 1fr; } }
++        .chart-container { min-height: 250px; position: relative; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="brand">SmartMonitor</div>
+    <ul class="nav-links">
+        <li><a href="/" class="active"><span class="live-dot"></span>Dashboard</a></li>
+        <li><a href="/history">History</a></li>
+        <li><a href="/register">Register</a></li>
+        <li><a href="/behavior-detection">Behavior</a></li>
+    </ul>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+    <h1><span>AI-Powered</span><br>Smart Monitoring</h1>
+    <p>Real-time face recognition and attendance tracking powered by computer vision.</p>
+    <div class="hero-actions">
+        <a href="/register" class="btn btn-primary">➕ Register Person</a>
+        <a href="/behavior-detection" class="btn btn-outline">🧠 Behavior Detection</a>
+        <a href="/history" class="btn btn-outline">📊 View History</a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="section">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-label">Total Registered</div>
+            <div class="stat-value purple" id="total">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-label">Present Today</div>
+            <div class="stat-value green" id="present">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">❌</div>
+            <div class="stat-label">Absent Today</div>
+            <div class="stat-value amber" id="absent">—</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-label">Attendance Rate</div>
+            <div class="stat-value blue" id="rate">—%</div>
+        </div>
+    </div>
+
+    <!-- Content grid -->
+    <div class="content-grid" style="grid-template-columns: 1fr 340px; margin-top: 1.5rem;">
+        <!-- Live Video Feed -->
+        <div class="card">
+            <div class="card-header">
+                <h2>📹 Live Monitoring Feed</h2>
+                <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+            </div>
+            <div class="card-body" style="padding:1rem">
+                <div class="video-wrap">
+                    <img id="videoStream" src="/video_feed" alt="Live feed"
+                         onerror="this.style.display='none';document.getElementById('videoPlaceholder').style.display='flex'">
+                    <div class="video-placeholder" id="videoPlaceholder">
+                        <div style="font-size:3rem">🎥</div>
+                        <span>Camera feed unavailable</span>
+                        <button class="btn btn-outline" style="margin-top:0.5rem" onclick="retryFeed()">↺ Retry</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Behavior Status -->
+        <div class="card">
+            <div class="card-header"><h2>🧠 Behavior Analysis</h2></div>
+            <div class="card-body">
+                <div style="text-align:center; padding: 1rem 0;">
+                    <div id="behaviorIcon" style="font-size: 4rem; margin-bottom: 0.5rem;">😊</div>
+                    <h3 id="behaviorState" style="font-size: 1.8rem; font-weight: 800; color: var(--success);">Active</h3>
+                    <div id="behaviorConf" style="font-size: 1rem; color: var(--text-muted); font-weight: 600;">Confidence: 100%</div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem;">
+                        <span>Attention Level</span>
+                        <span id="attentionVal">100%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                        <div id="attentionBar" style="width: 100%; height: 100%; background: var(--success); transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                <div id="behaviorAlert" style="display: none; margin-top: 1.5rem; padding: 0.75rem; background: rgba(239,68,68,0.15); border-radius: 10px; border-left: 4px solid var(--danger); animation: shake 0.5s infinite;">
+                    <strong style="color: var(--danger); font-size: 0.9rem;">⚠️ ALERT: User is Drowsy!</strong>
+                </div>
+                <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock_short.ogg" preload="auto"></audio>
+            </div>
+        </div>
+    </div>
+
+    </div>
++
++    <!-- Registered Profiles -->
++    <div class="section" style="padding-top: 0;">
++        <div class="card">
++            <div class="card-header">
++                <h2>👥 Registered Profiles</h2>
++                <a href="/register" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">View All</a>
++            </div>
++            <div class="card-body">
++                <div id="profileList" class="profile-grid">
++                    <p style="color:var(--text-muted); font-size:0.9rem">Loading profiles...</p>
++                </div>
++            </div>
++        </div>
++    </div>
++
++    <!-- Progress & Analytics -->
++    <div class="section" style="padding-top: 0;">
++        <div class="card">
++            <div class="card-header">
++                <h2>📈 Progress & Analytics</h2>
++                <div class="live-badge" style="background:rgba(99,102,241,0.15); color:var(--primary); border-color:rgba(99,102,241,0.3)">
++                    <span class="live-dot" style="background:var(--primary)"></span> REAL-TIME ANALYTICS
++                </div>
++            </div>
++            <div class="card-body">
++                <div class="analytics-grid">
++                    <div class="chart-container">
++                        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; text-transform:uppercase">Attendance Trend (Last 7 Days)</h4>
++                        <canvas id="trendChart"></canvas>
++                    </div>
++                    <div class="chart-container">
++                        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; text-transform:uppercase">Behavior Breakdown</h4>
++                        <canvas id="behaviorChart"></canvas>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++
+     <div class="content-grid">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Quick actions -->
+            <div class="card">
+                <div class="card-header"><h2>⚡ Quick Actions</h2></div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <a href="/register" class="btn btn-primary">➕ Register New Face</a>
+                        <button class="btn btn-outline" onclick="resetAttendance()">🔄 Reset Daily Records</button>
+                        <button class="btn btn-outline" onclick="exportCSV()">📥 Export Attendance</button>
+                        <a href="/behavior-detection" class="btn btn-outline">🧠 Open Behavior Analysis</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card">
+                <div class="card-header"><h2>📊 Attendance Chart</h2></div>
+                <div class="card-body chart-wrap">
+                    <canvas id="chart"></canvas>
+                    <p id="chartEmpty" style="text-align:center;color:var(--text-muted);font-size:0.85rem;display:none">No data yet. Register people to begin.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unknown alert -->
+    <div class="unknown-alert" id="unknownAlert" style="display:none">
+        <div class="alert-icon">🚨</div>
+        <div>
+            <strong>Unknown Person Detected!</strong>
+            <p>A face was detected that is not in the system. <a href="/register" style="color:var(--warning)">Register them →</a></p>
+        </div>
+    </div>
+
+    <!-- System status -->
+    <div class="card" style="margin-top:1.5rem">
+        <div class="card-header"><h2>✅ System Status</h2></div>
+        <div class="card-body" style="display:flex;gap:2rem;flex-wrap:wrap">
+            <div>
+                <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem">AI Engine</div>
+                <div style="color:var(--success);font-weight:700">● Online</div>
+            </div>
+            <div>
+                <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem">Camera</div>
+                <div id="camStatus" style="font-weight:700">● Checking…</div>
+            </div>
+            <div>
+                <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem">Last Update</div>
+                <div id="lastUpdate" style="font-weight:700;color:var(--cyan)">—</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let chart = null;
+
+// ── Stats ─────────────────────────────────────────────────
+async function loadStats() {
+    try {
+        const r = await fetch('/api/stats');
+        const d = await r.json();
+        const total = d.total_students || 0;
+        const present = d.present_today || 0;
+        const absent = d.absent_today || 0;
+        const rate = total > 0 ? Math.round((present/total)*100) : 0;
+        document.getElementById('total').textContent = total;
+        document.getElementById('present').textContent = present;
+        document.getElementById('absent').textContent = absent;
+        document.getElementById('rate').textContent = rate + '%';
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        updateChart(present, absent);
+    } catch(e) { /* silent */ }
+}
+
+// ── Chart ─────────────────────────────────────────────────
+function updateChart(present, absent) {
+    const ctx = document.getElementById('chart');
+    if (!ctx) return;
+    const empty = present + absent === 0;
+    document.getElementById('chartEmpty').style.display = empty ? 'block' : 'none';
+    ctx.style.display = empty ? 'none' : 'block';
+    if (empty) return;
+
+    if (chart) {
+        chart.data.datasets[0].data = [present, absent];
+        chart.update('none');
+        return;
+    }
+    chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Present', 'Absent'],
+            datasets: [{
+                data: [present, absent],
+                backgroundColor: ['rgba(16,185,129,0.8)','rgba(239,68,68,0.8)'],
+                borderColor: ['#10b981','#ef4444'],
+                borderWidth: 3,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true, cutout: '60%',
+            plugins: {
+                legend: { labels: { color: '#94a3b8', font: { size: 12, weight: '600' }, padding: 16 } }
+            }
+        }
+    });
+}
+
+// ── Camera status ─────────────────────────────────────────
+async function checkCamera() {
+    try {
+        const r = await fetch('/api/camera_check');
+        const d = await r.json();
+        const el = document.getElementById('camStatus');
+        if (d.status === 'connected') { el.textContent = '● Connected'; el.style.color = 'var(--success)'; }
+        else { el.textContent = '● Offline'; el.style.color = 'var(--danger)'; }
+    } catch(e) {}
+}
+
+// ── Reset attendance ───────────────────────────────────────
+async function resetAttendance() {
+    if (!confirm('⚠️ Reset all attendance records for today? This cannot be undone.')) return;
+    try {
+        const r = await fetch('/api/reset_attendance', {method:'POST'});
+        const d = await r.json();
+        if (d.success) { showToast('✅ Attendance records reset!', 'success'); loadStats(); }
+        else showToast('❌ ' + d.message, 'error');
+    } catch(e) { showToast('❌ Reset failed: ' + e.message, 'error'); }
+}
+
+// ── Export CSV ────────────────────────────────────────────
+function exportCSV() {
+    const link = document.createElement('a');
+    link.href = '/api/export_attendance';
+    link.download = 'attendance_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.click();
+    showToast('📥 Downloading attendance CSV…', 'success');
+}
+
+// ── Video feed retry ──────────────────────────────────────
+function retryFeed() {
+    const img = document.getElementById('videoStream');
+    const ph = document.getElementById('videoPlaceholder');
+    ph.style.display = 'none';
+    img.style.display = 'block';
+    img.src = '/video_feed?t=' + Date.now();
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3500);
+}
+
+async function updateBehavior() {
+    try {
+        const r = await fetch('/api/behavior_status');
+        const d = await r.json();
+        const state = d.behavior || 'Active';
+        const conf = d.confidence || 0;
+        
+        const stateEl = document.getElementById('behaviorState');
+        const iconEl = document.getElementById('behaviorIcon');
+        const confEl = document.getElementById('behaviorConf');
+        const barEl = document.getElementById('attentionBar');
+        const valEl = document.getElementById('attentionVal');
+        const alertEl = document.getElementById('behaviorAlert');
+        const audio = document.getElementById('alertSound');
+
+        stateEl.textContent = state;
+        confEl.textContent = `Confidence: ${Math.round(conf)}%`;
+        valEl.textContent = `${Math.round(conf)}%`;
+        barEl.style.width = `${conf}%`;
+
+        if (state === 'Active') {
+            stateEl.style.color = 'var(--success)';
+            barEl.style.background = 'var(--success)';
+            iconEl.textContent = '😊';
+            alertEl.style.display = 'none';
+        } else if (state === 'Dull') {
+            stateEl.style.color = 'var(--warning)';
+            barEl.style.background = 'var(--warning)';
+            iconEl.textContent = '😐';
+            alertEl.style.display = 'none';
+        } else if (state === 'Sleepy' || state === 'Drowsy') {
+            stateEl.style.color = 'var(--danger)';
+            barEl.style.background = 'var(--danger)';
+            iconEl.textContent = '😴';
+            alertEl.style.display = 'block';
+            if (audio.paused) audio.play().catch(e => {});
+        }
+    } catch(e) {}
+}
+
+async function loadProfiles() {
+    try {
+        const r = await fetch('/api/v1/advanced/users');
+        const d = await r.json();
+        if (!d.success) return;
+        
+        const list = document.getElementById('profileList');
+        if (d.users.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem">No registered users yet.</p>';
+            return;
+        }
+        
+        list.innerHTML = d.users.slice(0, 4).map(u => `
+            <div class="profile-card">
+                <div class="profile-avatar">${u.name[0].toUpperCase()}</div>
+                <div class="profile-info">
+                    <h4>${u.name}</h4>
+                    <p>ID: ${u.roll}</p>
+                    <p style="font-size:0.65rem; margin-top:2px">Joined: ${u.reg_date?.split(' ')[0] || 'N/A'}</p>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {}
+}
+
+let trendChart = null;
+let behaviorChart = null;
+
+async function loadProgressAnalytics() {
+    try {
+        const r = await fetch('/api/v1/advanced/analytics/progress');
+        const d = await r.json();
+        if (!d.success) return;
+        
+        // Update Trend Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        const labels = d.attendance_trend.map(i => i.date.split('-').slice(1).join('/'));
+        const values = d.attendance_trend.map(i => i.count);
+        
+        if (trendChart) {
+            trendChart.data.labels = labels;
+            trendChart.data.datasets[0].data = values;
+            trendChart.update();
+        } else {
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Present Students',
+                        data: values,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99,102,241,0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+        
+        // Update Behavior Chart
+        const behaviorCtx = document.getElementById('behaviorChart').getContext('2d');
+        const bLabels = d.behavior_distribution.map(i => i.behavior);
+        const bValues = d.behavior_distribution.map(i => i.count);
+        
+        if (behaviorChart) {
+            behaviorChart.data.labels = bLabels;
+            behaviorChart.data.datasets[0].data = bValues;
+            behaviorChart.update();
+        } else {
+            behaviorChart = new Chart(behaviorCtx, {
+                type: 'bar',
+                data: {
+                    labels: bLabels,
+                    datasets: [{
+                        data: bValues,
+                        backgroundColor: [
+                            'rgba(16,185,129,0.7)',
+                            'rgba(245,158,11,0.7)',
+                            'rgba(239,68,68,0.7)',
+                            'rgba(99,102,241,0.7)'
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+    } catch(e) {}
+}
+
+// ── Boot ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    checkCamera();
+    updateBehavior();
+    loadProfiles();
+    loadProgressAnalytics();
+    
+    setInterval(loadStats, 3000);
+    setInterval(checkCamera, 10000);
+    setInterval(updateBehavior, 1000);
+    setInterval(loadProgressAnalytics, 15000);
+
+    document.addEventListener('visibilitychange', () => {
+        const img = document.getElementById('videoStream');
+        if (document.hidden) img.src = "";
+        else img.src = "/video_feed?t=" + Date.now();
+    });
+    
+    setInterval(() => {
+        const img = document.getElementById('videoStream');
+        if (!document.hidden && (!img.complete || img.naturalHeight === 0)) {
+            retryFeed();
+        }
+    }, 8000);
+});
+</script>
+</body>
+</html>

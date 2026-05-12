@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Monitoring System - AI-Powered Attendance</title>
+    <link rel="stylesheet" href="/static/modern-style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                <span>🚀</span>
+                <span>SmartMonitor</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link active">Dashboard</a></li>
+                <li><a href="/history" class="nav-link">History</a></li>
+                <li><a href="/register" class="nav-link">Register</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>🎯 AI-Powered Monitoring</h1>
+        <p>Real-time attendance tracking with intelligent face recognition technology</p>
+        <div class="hero-actions">
+            <a href="#dashboard" class="btn btn-primary">
+                <span>►</span>
+                <span>Start Monitoring</span>
+            </a>
+            <a href="/register" class="btn btn-secondary">
+                <span>👤</span>
+                <span>Register Face</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Main Dashboard Section -->
+    <section id="dashboard" class="section">
+        <div class="container">
+            <!-- Stats Overview -->
+            <h2 style="color: white; margin-bottom: 2rem; font-size: 2rem;">📊 Today's Overview</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-label">Total Students</div>
+                    <div class="stat-value" id="total">-</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-label">Present Today</div>
+                    <div class="stat-value" id="present">-</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-label">Absent Today</div>
+                    <div class="stat-value" id="absent">-</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-label">Attendance %</div>
+                    <div class="stat-value" id="percentage">-</div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
+                <!-- Video Feed Card -->
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">📹 Live Feed</h2>
+                            <p class="card-subtitle">Real-time monitoring</p>
+                        </div>
+                        <div class="video-overlay live">
+                            <span class="live-indicator"></span>
+                            <span>LIVE</span>
+                        </div>
+                    </div>
+                    <div class="video-container">
+                        <img id="videoStream" class="video-stream" alt="Live Video Stream">
+                        <div id="videoPlaceholder" class="video-placeholder">
+                            <span>📹 Video feed loading... Start monitoring to begin</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">📊 Attendance Chart</h2>
+                    </div>
+                    <canvas id="chart" style="max-height: 250px;"></canvas>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">⚡ Quick Actions</h2>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="location.href='/register'">
+                            <span>➕</span>
+                            <span>Register New Face</span>
+                        </button>
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="confirmReset()">
+                            <span>🔄</span>
+                            <span>Reset Daily Attendance</span>
+                        </button>
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="location.href='/history'">
+                            <span>📜</span>
+                            <span>View History</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div id="unknownAlert" style="display: none; margin-top: 2rem;" class="alert alert-warning">
+                <strong>⚠️ Unknown Person Detected!</strong>
+                <p style="margin-top: 0.5rem;" id="alertText">A person was detected who is not registered in the system. <a href="/register" style="color: #f59e0b; text-decoration: underline;">Register them here</a></p>
+            </div>
+
+            <!-- System Status -->
+            <div class="card" style="margin-top: 2rem; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
+                <div class="card-header">
+                    <h2 class="card-title">✅ System Status</h2>
+                    <span style="display: inline-flex; align-items: center; gap: 0.5rem; color: #10b981; font-weight: 600;">
+                        <span class="live-indicator"></span>
+                        <span>Operational</span>
+                    </span>
+                </div>
+                <p style="color: #94a3b8;">System is running smoothly. Last updated: <span id="lastUpdate">just now</span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+        // Auto-update stats
+        let chartInstance = null;
+
+        function updateStats() {
+            fetch('/api/stats')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('total').textContent = data.total_students || 0;
+                    document.getElementById('present').textContent = data.present_today || 0;
+                    document.getElementById('absent').textContent = data.absent_today || 0;
+                    document.getElementById('percentage').textContent = Math.round((data.present_today / (data.total_students || 1)) * 100) + '%';
+                    document.getElementById('lastUpdate').textContent = 'just now';
+                })
+                .catch(err => console.log('Stats update failed'));
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('chart');
+            if (!ctx) return;
+
+            fetch('/api/chart_data')
+                .then(res => res.json())
+                .then(data => {
+                    if (chartInstance) chartInstance.destroy();
+                    
+                    chartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Present', 'Absent'],
+                            datasets: [{
+                                data: [data.present || 0, data.absent || 0],
+                                backgroundColor: ['#10b981', '#ef4444'],
+                                borderColor: ['#059669', '#dc2626'],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: '#cbd5e1',
+                                        font: { size: 12 }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(err => console.log('Chart init failed'));
+        }
+
+        function confirmReset() {
+            if (confirm('Are you sure you want to reset all attendance records for today?')) {
+                fetch('/api/reset_attendance', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert('Attendance reset successfully!');
+                        updateStats();
+                        initChart();
+                    })
+                    .catch(err => alert('Reset failed: ' + err));
+            }
+        }
+
+        // Video stream update
+        function updateVideoStream() {
+            const img = document.getElementById('videoStream');
+            const placeholder = document.getElementById('videoPlaceholder');
+            
+            img.onload = function() {
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            
+            img.onerror = function() {
+                img.style.display = 'none';
+                placeholder.style.display = 'flex';
+            };
+            
+            img.src = '/video_feed?t=' + Date.now();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            initChart();
+            updateVideoStream();
+
+            // Update every 2 seconds
+            setInterval(updateStats, 2000);
+            setInterval(updateVideoStream, 500);
+            
+            // Check for unknown person alerts
+            setInterval(() => {
+                fetch('/api/unknown_alert')
+                    .then(res => res.json())
+                    .then(data => {
+                        const alert = document.getElementById('unknownAlert');
+                        if (data.unknown_detected) {
+                            alert.style.display = 'block';
+                        }
+                    })
+                    .catch(err => {});
+            }, 1000);
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

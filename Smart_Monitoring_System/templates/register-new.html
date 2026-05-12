@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Smart Monitor Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 3rem 2rem;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .form-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.95rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e8e8e8;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .login-link {
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+            margin-top: 1.5rem;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .alert-error {
+            background: #fee;
+            border-left: 4px solid #f44;
+            color: #c33;
+        }
+
+        .alert-success {
+            background: #efe;
+            border-left: 4px solid #4f4;
+            color: #3c3;
+        }
+
+        .alert-info {
+            background: #eef;
+            border-left: 4px solid #44f;
+            color: #33c;
+        }
+
+        .otp-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .otp-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .otp-timer {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .otp-timer.expired {
+            color: #f44;
+        }
+
+        .resend-otp {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .resend-otp a {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .resend-otp a:hover {
+            text-decoration: underline;
+        }
+
+        .resend-otp a.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+            text-decoration: none;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .button-group .btn {
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .register-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .form-title {
+                font-size: 1.3rem;
+            }
+
+            .otp-input {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-card">
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-step active" id="step1Indicator"></div>
+                <div class="progress-step" id="step2Indicator"></div>
+                <div class="progress-step" id="step3Indicator"></div>
+            </div>
+
+            <!-- Alert -->
+            <div id="alertBox" class="alert"></div>
+
+            <!-- Step 1: Registration Details -->
+            <div class="step active" id="step1">
+                <h1 class="form-title">Create Account</h1>
+                <p class="form-subtitle">Join SmartMonitor to get started</p>
+
+                <form id="step1Form" onsubmit="handleStep1(event)">
+                    <div class="form-group">
+                        <label for="name">👤 Full Name</label>
+                        <input type="text" id="name" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userId">📍 User ID / Employee ID</label>
+                        <input type="text" id="userId" placeholder="EMP-001" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">📧 Email Address</label>
+                        <input type="email" id="email" placeholder="your@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">📱 Phone Number</label>
+                        <input type="tel" id="phone" placeholder="+1 (555) 000-0000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">🔐 Password</label>
+                        <input type="password" id="password" placeholder="Minimum 6 characters" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">🔐 Confirm Password</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span>📲</span>
+                        <span>Send OTP</span>
+                    </button>
+                </form>
+
+                <div class="login-link">
+                    Already have an account? <a href="/login">Sign in here</a>
+                </div>
+            </div>
+
+            <!-- Step 2: OTP Verification -->
+            <div class="step" id="step2">
+                <h1 class="form-title">Verify Phone</h1>
+                <p class="form-subtitle">Enter the OTP sent to <span id="phoneDisplay"></span></p>
+
+                <div id="otpAlert" class="alert alert-info">
+                    Check your SMS for the 6-digit verification code
+                </div>
+
+                <form id="step2Form" onsubmit="handleStep2(event)">
+                    <div class="otp-input-group" id="otpGroup">
+                        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" data-index="0">
+                        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" data-index="1">
+                        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" data-index="2">
+                        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" data-index="3">
+                        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" data-index="4">
+                        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" data-index="5">
+                    </div>
+
+                    <div class="otp-timer" id="otpTimer">
+                        OTP expires in: <span id="timerDisplay">5:00</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span>✓</span>
+                        <span>Verify OTP</span>
+                    </button>
+                </form>
+
+                <div class="resend-otp">
+                    <span>Didn't receive code? </span>
+                    <a id="resendBtn" onclick="resendOTP()">Resend OTP</a>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStep1()">← Back</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Password & Confirm -->
+            <div class="step" id="step3">
+                <h1 class="form-title">Almost Done!</h1>
+                <p class="form-subtitle">Your account has been verified</p>
+
+                <form id="step3Form" onsubmit="handleStep3(event)">
+                    <div class="form-group">
+                        <label>✓ Email: <strong id="confirmedEmail"></strong></label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>✓ Phone: <strong id="confirmedPhone"></strong></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span>🎉</span>
+                        <span>Complete Registration</span>
+                    </button>
+                </form>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStep1()">← Start Over</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let formData = {};
+        let otpTimer = null;
+        let otpTimeRemaining = 300; // 5 minutes
+
+        function showAlert(message, type = 'error') {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.style.display = 'block';
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBox').style.display = 'none';
+        }
+
+        function goToStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active'));
+
+            // Show new step
+            document.getElementById(`step${step}`).classList.add('active');
+            for (let i = 1; i <= step; i++) {
+                document.getElementById(`step${i}Indicator`).classList.add('active');
+            }
+
+            currentStep = step;
+            hideAlert();
+        }
+
+        function goToStep1() {
+            goToStep(1);
+        }
+
+        async function handleStep1(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const userId = document.getElementById('userId').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validation
+            if (!name || !userId || !email || !phone || !password) {
+                showAlert('❌ All fields are required', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('❌ Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('❌ Passwords do not match', 'error');
+                return;
+            }
+
+            // Store form data
+            formData = {
+                name: name,
+                user_id: userId,
+                email: email,
+                phone: phone,
+                password: password
+            };
+
+            // Send OTP
+            try {
+                const response = await fetch('/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone: phone,
+                        email: email
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('phoneDisplay').textContent = phone;
+                    goToStep(2);
+                    startOTPTimer();
+                    setupOTPInput();
+                    showAlert('✓ OTP sent successfully!', 'success');
+                } else {
+                    showAlert(data.message || 'Failed to send OTP', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Connection error. Please try again.', 'error');
+            }
+        }
+
+        function setupOTPInput() {
+            const inputs = document.querySelectorAll('.otp-input');
+            inputs.forEach((input, index) => {
+                input.value = '';
+                input.addEventListener('keyup', (e) => {
+                    if (e.key >= '0' && e.key <= '9' && input.value) {
+                        if (index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        }
+                    } else if (e.key === 'Backspace' && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const paste = e.clipboardData.getData('text');
+                    if (/^\d{6}$/.test(paste)) {
+                        paste.split('').forEach((digit, idx) => {
+                            if (idx < inputs.length) {
+                                inputs[idx].value = digit;
+                            }
+                        });
+                        inputs[inputs.length - 1].focus();
+                    }
+                });
+            });
+        }
+
+        function startOTPTimer() {
+            otpTimeRemaining = 300;
+            updateOTPTimer();
+            
+            otpTimer = setInterval(() => {
+                otpTimeRemaining--;
+                updateOTPTimer();
+                
+                if (otpTimeRemaining <= 0) {
+                    clearInterval(otpTimer);
+                    document.getElementById('resendBtn').classList.remove('disabled');
+                }
+            }, 1000);
+        }
+
+        function updateOTPTimer() {
+            const minutes = Math.floor(otpTimeRemaining / 60);
+            const seconds = otpTimeRemaining % 60;
+            const display = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            document.getElementById('timerDisplay').textContent = display;
+
+            if (otpTimeRemaining <= 60) {
+                document.getElementById('otpTimer').classList.add('expired');
+            }
+        }
+
+        function resendOTP() {
+            handleStep1({ preventDefault: () => {} });
+        }
+
+        async function handleStep2(event) {
+            event.preventDefault();
+
+            const inputs = document.querySelectorAll('.otp-input');
+            const otp = Array.from(inputs).map(input => input.value).join('');
+
+            if (otp.length !== 6) {
+                showAlert('❌ Please enter all 6 digits', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone: formData.phone,
+                        otp: otp
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    clearInterval(otpTimer);
+                    document.getElementById('confirmedEmail').textContent = formData.email;
+                    document.getElementById('confirmedPhone').textContent = formData.phone;
+                    goToStep(3);
+                    showAlert('✓ Phone verified successfully!', 'success');
+                } else {
+                    showAlert(data.message || 'Invalid OTP', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Connection error. Please try again.', 'error');
+            }
+        }
+
+        async function handleStep3(event) {
+            event.preventDefault();
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✓ Registration successful! Redirecting to face registration...', 'success');
+                    setTimeout(() => {
+                        localStorage.setItem('user_email', formData.email);
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    showAlert(data.message || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Connection error. Please try again.', 'error');
+            }
+        }
+
+        // Initialize
+        setupOTPInput();
+    </script>
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SmartMonitor Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e27;
+            --surface: rgba(255,255,255,0.04);
+            --surface-hover: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.1);
+            --primary: #6366f1;
+            --primary-glow: rgba(99,102,241,0.3);
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.12) 0%, transparent 60%),
+                              radial-gradient(ellipse at 80% 20%, rgba(16,185,129,0.08) 0%, transparent 50%);
+        }
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2rem;
+            background: rgba(10,14,39,0.8);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .brand { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg,#6366f1,#10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 0.5rem; list-style: none; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--surface-hover); }
+        .nav-links a.active { color: var(--primary); }
+
+        .page { max-width: 780px; margin: 2.5rem auto; padding: 0 1.5rem 4rem; }
+        .page-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .page-sub { color: var(--text-muted); margin-bottom: 2rem; }
+
+        .tabs { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+        .tab-btn {
+            flex: 1; padding: 0.8rem 1rem; border: 1px solid var(--border);
+            border-radius: 12px; background: var(--surface); color: var(--text-muted);
+            cursor: pointer; font-family: inherit; font-size: 0.95rem; font-weight: 500;
+            transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .tab-btn.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 0 20px var(--primary-glow); }
+        .tab-btn:hover:not(.active) { background: var(--surface-hover); color: var(--text); border-color: var(--primary); }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2rem; backdrop-filter: blur(10px);
+        }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-group input {
+            width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+            font-family: inherit; font-size: 0.95rem; transition: all 0.2s;
+        }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        /* Camera section */
+        .camera-box {
+            width: 100%; aspect-ratio: 16/10; background: #000;
+            border-radius: 12px; overflow: hidden; position: relative;
+            border: 2px solid var(--border); margin: 1.25rem 0;
+        }
+        #cameraFeed { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .cam-placeholder {
+            width: 100%; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: var(--text-muted); gap: 0.75rem;
+        }
+        .cam-placeholder svg { width: 48px; height: 48px; opacity: 0.4; }
+        .cam-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: none; align-items: center; justify-content: center;
+        }
+        .cam-overlay .scan-ring {
+            width: 180px; height: 180px; border: 3px solid var(--success);
+            border-radius: 50%; animation: pulse-ring 2s ease-in-out infinite;
+        }
+        @keyframes pulse-ring { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:0.6} }
+
+        .btn {
+            padding: 0.75rem 1.5rem; border-radius: 10px; border: none; cursor: pointer;
+            font-family: inherit; font-size: 0.95rem; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #5254d4; transform: translateY(-1px); box-shadow: 0 6px 20px var(--primary-glow); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #0da672; transform: translateY(-1px); }
+        .btn-secondary { background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-full { width: 100%; justify-content: center; padding: 1rem; font-size: 1rem; }
+
+        .cam-controls { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+        .photo-count { color: var(--text-muted); font-size: 0.9rem; margin: 0.75rem 0 0.5rem; }
+        .photo-count span { color: var(--primary); font-weight: 700; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+        .photo-thumb { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; }
+        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-thumb .del-btn {
+            position: absolute; top: 2px; right: 2px; width: 20px; height: 20px;
+            background: var(--danger); border: none; border-radius: 50%; color: white;
+            font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Upload zone */
+        .upload-zone {
+            border: 2px dashed var(--border); border-radius: 12px; padding: 2.5rem;
+            text-align: center; cursor: pointer; transition: all 0.25s; margin: 1.25rem 0;
+        }
+        .upload-zone:hover, .upload-zone.drag { border-color: var(--primary); background: var(--primary-glow); }
+        .upload-zone p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem; }
+
+        .actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .actions .btn { flex: 1; }
+
+        .msg { display: none; padding: 1rem 1.25rem; border-radius: 10px; margin-top: 1.25rem; font-weight: 500; font-size: 0.95rem; }
+        .msg.success { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: var(--success); }
+        .msg.error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: var(--danger); }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 1rem; display: none; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg,var(--primary),var(--success)); border-radius: 2px; animation: progress 1.5s ease-in-out infinite; }
+        @keyframes progress { 0%{width:0%} 50%{width:70%} 100%{width:100%} }
+
+        @media(max-width:600px) { .form-row{grid-template-columns:1fr} .tabs{flex-direction:column} }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="brand">SmartMonitor</div>
+    <ul class="nav-links">
+        <li><a href="/">Dashboard</a></li>
+        <li><a href="/history">History</a></li>
+        <li><a href="/register" class="active">Register</a></li>
+    </ul>
+</nav>
+
+<div class="page">
+    <div class="page-title">📸 Register New Person</div>
+    <div class="page-sub">Capture or upload face images to add someone to the monitoring system.</div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('camera')">📷 Live Camera</button>
+        <button class="tab-btn" onclick="switchTab('upload')">📤 Upload Images</button>
+    </div>
+
+    <!-- ===== CAMERA TAB ===== -->
+    <div id="tab-camera" class="tab-panel active">
+        <div class="card">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="cam-name" placeholder="e.g. Jahnavi Kotana">
+                </div>
+                <div class="form-group">
+                    <label>ID / Roll Number *</label>
+                    <input type="text" id="cam-roll" placeholder="e.g. CS2024001">
+                </div>
+            </div>
+
+            <div class="camera-box">
+                <video id="cameraFeed" autoplay playsinline muted></video>
+                <div class="cam-placeholder" id="cam-placeholder">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.893L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+                    <span>Camera not started</span>
+                    <span style="font-size:0.8rem">Click "Start Camera" below</span>
+                </div>
+                <div class="cam-overlay" id="cam-overlay">
+                    <div class="scan-ring"></div>
+                </div>
+            </div>
+
+            <div class="cam-controls">
+                <button class="btn btn-success" id="startBtn" onclick="startCamera()">▶ Start Camera</button>
+                <button class="btn btn-primary" id="captureBtn" onclick="capturePhoto()" style="display:none">📸 Capture Photo</button>
+                <button class="btn btn-secondary" id="stopBtn" onclick="stopCamera()" style="display:none">⏹ Stop</button>
+            </div>
+
+            <div class="photo-count">Captured: <span id="captureCount">0</span> photos <small style="color:var(--text-muted)">(need at least 3)</small></div>
+            <div class="photo-grid" id="cam-grid"></div>
+
+            <div class="actions">
+                <a href="/" class="btn btn-secondary">← Cancel</a>
+                <button class="btn btn-primary" onclick="submitCamera()">✅ Register Person</button>
+            </div>
+            <div class="progress-bar" id="cam-progress"><div class="progress-fill"></div></div>
+            <div class="msg" id="cam-msg"></div>
+        </div>
+    </div>
+
+    <!-- ===== UPLOAD TAB ===== -->
+    <div id="tab-upload" class="tab-panel">
+        <div class="card">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="up-name" placeholder="e.g. Jahnavi Kotana">
+                </div>
+                <div class="form-group">
+                    <label>ID / Roll Number *</label>
+                    <input type="text" id="up-roll" placeholder="e.g. CS2024001">
+                </div>
+            </div>
+
+            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('fileInput').click()">
+                <div style="font-size:2.5rem">📁</div>
+                <p style="font-size:1rem;font-weight:600;color:var(--text);margin-top:0.5rem">Drop images here or click to browse</p>
+                <p>JPG, PNG supported · Upload 3–5 clear face photos</p>
+            </div>
+            <input type="file" id="fileInput" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
+
+            <div class="photo-count" style="display:none" id="up-count-label">Selected: <span id="up-count">0</span> photos</div>
+            <div class="photo-grid" id="up-grid"></div>
+
+            <div class="actions">
+                <a href="/" class="btn btn-secondary">← Cancel</a>
+                <button class="btn btn-primary" onclick="submitUpload()">✅ Register Person</button>
+            </div>
+            <div class="progress-bar" id="up-progress"><div class="progress-fill"></div></div>
+            <div class="msg" id="up-msg"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='camera')||(i===1&&tab==='upload')));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-'+tab).classList.add('active');
+    if (tab !== 'camera') stopCamera();
+}
+
+// ── Camera ────────────────────────────────────────────────
+let stream = null;
+let capturedBlobs = [];
+
+async function startCamera() {
+    try {
+        // Try to stop any existing server-side video feed first
+        try { await fetch('/api/stop_video_feed', {method:'POST'}); } catch(e) {}
+        await new Promise(r => setTimeout(r, 500)); // wait for release
+
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+            audio: false
+        });
+        const video = document.getElementById('cameraFeed');
+        video.srcObject = stream;
+        video.style.display = 'block';
+        document.getElementById('cam-placeholder').style.display = 'none';
+        document.getElementById('cam-overlay').style.display = 'flex';
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('captureBtn').style.display = 'inline-flex';
+        document.getElementById('stopBtn').style.display = 'inline-flex';
+    } catch(err) {
+        let msg = 'Could not access camera.';
+        if (err.name === 'NotAllowedError') msg = 'Camera permission denied. Click the camera icon in your browser bar and allow access.';
+        else if (err.name === 'NotFoundError') msg = 'No camera detected. Please connect a webcam.';
+        else if (err.name === 'NotReadableError') msg = 'Camera is in use by another application (close Teams, Zoom, etc.) and try again.';
+        showMsg('cam-msg', 'error', '❌ ' + msg);
+    }
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraFeed');
+    if (!video.srcObject) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+        capturedBlobs.push(blob);
+        renderCamGrid();
+    }, 'image/jpeg', 0.92);
+}
+
+function renderCamGrid() {
+    const grid = document.getElementById('cam-grid');
+    grid.innerHTML = '';
+    capturedBlobs.forEach((blob, i) => {
+        const url = URL.createObjectURL(blob);
+        const div = document.createElement('div');
+        div.className = 'photo-thumb';
+        div.innerHTML = `<img src="${url}"><button class="del-btn" onclick="removeCam(${i})">✕</button>`;
+        grid.appendChild(div);
+    });
+    document.getElementById('captureCount').textContent = capturedBlobs.length;
+}
+
+function removeCam(i) { capturedBlobs.splice(i,1); renderCamGrid(); }
+
+function stopCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    const video = document.getElementById('cameraFeed');
+    video.srcObject = null;
+    video.style.display = 'none';
+    document.getElementById('cam-placeholder').style.display = 'flex';
+    document.getElementById('cam-overlay').style.display = 'none';
+    document.getElementById('startBtn').style.display = 'inline-flex';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'none';
+}
+
+async function submitCamera() {
+    const name = document.getElementById('cam-name').value.trim();
+    const roll = document.getElementById('cam-roll').value.trim();
+    if (!name || !roll) return showMsg('cam-msg','error','❌ Please enter both Name and ID.');
+    if (capturedBlobs.length < 1) return showMsg('cam-msg','error','❌ Please capture at least 1 photo.');
+
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('roll', roll);
+    capturedBlobs.forEach((b,i) => fd.append(`image_${i}`, b, `capture_${i}.jpg`));
+
+    document.getElementById('cam-progress').style.display = 'block';
+    try {
+        const res = await fetch('/api/register', { method:'POST', body: fd });
+        const data = await res.json();
+        document.getElementById('cam-progress').style.display = 'none';
+        if (data.success) {
+            showMsg('cam-msg','success',`✅ ${name} registered successfully! Redirecting...`);
+            stopCamera();
+            setTimeout(() => location.href = '/', 2000);
+        } else {
+            showMsg('cam-msg','error','❌ ' + data.message);
+        }
+    } catch(e) {
+        document.getElementById('cam-progress').style.display = 'none';
+        showMsg('cam-msg','error','❌ Network error: ' + e.message);
+    }
+}
+
+// ── Upload ────────────────────────────────────────────────
+let uploadFiles = [];
+
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+    uploadFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const grid = document.getElementById('up-grid');
+    grid.innerHTML = '';
+    uploadFiles.forEach((f,i) => {
+        const url = URL.createObjectURL(f);
+        const div = document.createElement('div'); div.className = 'photo-thumb';
+        div.innerHTML = `<img src="${url}"><button class="del-btn" onclick="removeUp(${i})">✕</button>`;
+        grid.appendChild(div);
+    });
+    document.getElementById('up-count').textContent = uploadFiles.length;
+    document.getElementById('up-count-label').style.display = uploadFiles.length ? 'block' : 'none';
+}
+
+function removeUp(i) { uploadFiles.splice(i,1); handleFiles([]); /* rebuild */ 
+    // Rebuild from remaining
+    const grid = document.getElementById('up-grid');
+    grid.innerHTML = '';
+    uploadFiles.forEach((f,idx) => {
+        const url = URL.createObjectURL(f);
+        const div = document.createElement('div'); div.className = 'photo-thumb';
+        div.innerHTML = `<img src="${url}"><button class="del-btn" onclick="removeUp(${idx})">✕</button>`;
+        grid.appendChild(div);
+    });
+    document.getElementById('up-count').textContent = uploadFiles.length;
+}
+
+async function submitUpload() {
+    const name = document.getElementById('up-name').value.trim();
+    const roll = document.getElementById('up-roll').value.trim();
+    if (!name || !roll) return showMsg('up-msg','error','❌ Please enter both Name and ID.');
+    if (uploadFiles.length < 1) return showMsg('up-msg','error','❌ Please select at least 1 image.');
+
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('roll', roll);
+    uploadFiles.forEach((f,i) => fd.append(`image_${i}`, f));
+
+    document.getElementById('up-progress').style.display = 'block';
+    try {
+        const res = await fetch('/api/register', { method:'POST', body: fd });
+        const data = await res.json();
+        document.getElementById('up-progress').style.display = 'none';
+        if (data.success) {
+            showMsg('up-msg','success',`✅ ${name} registered successfully! Redirecting...`);
+            setTimeout(() => location.href = '/', 2000);
+        } else {
+            showMsg('up-msg','error','❌ ' + data.message);
+        }
+    } catch(e) {
+        document.getElementById('up-progress').style.display = 'none';
+        showMsg('up-msg','error','❌ Network error: ' + e.message);
+    }
+}
+
+function showMsg(id, type, text) {
+    const el = document.getElementById(id);
+    el.className = 'msg ' + type;
+    el.textContent = text;
+    el.style.display = 'block';
+    if (type === 'error') setTimeout(() => el.style.display = 'none', 6000);
+}
+</script>
+</body>
+</html>

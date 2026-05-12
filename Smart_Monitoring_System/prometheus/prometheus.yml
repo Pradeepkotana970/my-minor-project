@@ -1,0 +1,183 @@
+# Prometheus Configuration for Smart Monitoring System
+# Save as: prometheus/prometheus.yml
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'Smart-Monitoring-System'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Rules files
+rule_files:
+  - '/etc/prometheus/rules.yml'
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Monitoring System Application
+  - job_name: 'monitoring-system'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    static_configs:
+      - targets: 
+          - 'monitoring-system-1:5000'
+          - 'monitoring-system-2:5000'
+          - 'monitoring-system-3:5000'
+        labels:
+          service: 'monitoring-ui'
+          version: '2.0'
+    
+    # Service discovery and relabeling
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '$1:5000'
+        target_label: __address__
+      
+      - source_labels: [__scheme__, __address__]
+        separator: '://'
+        target_label: __param_target
+
+  # Custom application metrics
+  - job_name: 'monitoring-app-metrics'
+    metrics_path: '/api/metrics'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['monitoring-system:5000']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'monitoring_(fps|latency|cpu|memory|recognition_.*)' 
+        action: keep
+
+  # Node Exporter (system metrics)
+  - job_name: 'node-metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}:9100'
+        target_label: __address__
+
+  # PostgreSQL Metrics
+  - job_name: 'postgres-metrics'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}:9187'
+        target_label: __address__
+
+  # Redis Metrics
+  - job_name: 'redis-metrics'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}:9121'
+        target_label: __address__
+
+  # Nginx Metrics (via nginx-prometheus-exporter)
+  - job_name: 'nginx-metrics'
+    static_configs:
+      - targets: ['nginx-exporter:4040']
+
+  # Docker Metrics (via cAdvisor)
+  - job_name: 'docker-metrics'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Grafana Metrics
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: '/api/prom/metrics'
+
+  # GPU Metrics (if using NVIDIA GPU)
+  - job_name: 'gpu-metrics'
+    static_configs:
+      - targets: ['nvidia-smi-exporter:9400']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}:9400'
+        target_label: __address__
+
+  # Application Performance Monitoring
+  - job_name: 'face-detection-metrics'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['monitoring-system:5000']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(face_detection_.*|recognition_.*|behavior_analysis_.*)'
+        action: keep
+
+  # Service availability checks
+  - job_name: 'http-probes'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://monitoring-system:5000
+          - http://monitoring-system:5000/api/status
+          - http://grafana:3000
+          - https://monitoring.example.com
+        labels:
+          service: 'monitoring-system'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # SSL Certificate Expiry Check
+  - job_name: 'ssl-certs'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - 'monitoring.example.com:443'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Remote storage (optional - for long-term retention)
+  # Uncomment to enable
+  # remote_write:
+  #   - url: http://remote-storage:9009/api/v1/push
+  #     queue_config:
+  #       capacity: 10000
+  #       max_shards: 200
+  #       min_shards: 1
+  #       min_samples_per_send: 1000
+  #       batch_send_wait: 5s
+  #       min_retry_period: 30ms
+  #       max_retry_period: 100ms
+  #     write_relabel_configs:
+  #       - source_labels: [__name__]
+  #         regex: 'monitoring_.*'
+  #         action: keep

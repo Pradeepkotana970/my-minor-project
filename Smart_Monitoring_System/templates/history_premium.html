@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance History — SmartMonitor Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:#0a0e27; --surface:rgba(255,255,255,0.04); --surface-2:rgba(255,255,255,0.07);
+            --border:rgba(255,255,255,0.1); --primary:#6366f1; --success:#10b981;
+            --danger:#ef4444; --cyan:#06b6d4; --text:#f1f5f9; --text-muted:#94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh;
+               background-image:radial-gradient(ellipse at 20% 30%,rgba(99,102,241,0.12) 0%,transparent 55%); }
+        nav { display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem;
+              background:rgba(10,14,39,0.85); border-bottom:1px solid var(--border); backdrop-filter:blur(20px);
+              position:sticky; top:0; z-index:100; }
+        .brand { font-size:1.4rem; font-weight:800; background:linear-gradient(135deg,#6366f1,#10b981);
+                 -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .nav-links { display:flex; gap:0.5rem; list-style:none; }
+        .nav-links a { color:var(--text-muted); text-decoration:none; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem; transition:all 0.2s; }
+        .nav-links a:hover { color:var(--text); background:var(--surface-2); }
+        .nav-links a.active { color:var(--primary); background:rgba(99,102,241,0.1); }
+
+        .page { max-width:1100px; margin:2rem auto; padding:0 1.5rem 4rem; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:1rem; }
+        .page-title { font-size:1.8rem; font-weight:800; }
+        .page-sub { color:var(--text-muted); font-size:0.9rem; margin-top:0.25rem; }
+
+        .btn { padding:0.65rem 1.2rem; border-radius:10px; border:none; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:600;
+               display:inline-flex; align-items:center; gap:0.45rem; transition:all 0.2s; text-decoration:none; }
+        .btn-primary { background:var(--primary); color:white; }
+        .btn-primary:hover { background:#5254d4; transform:translateY(-1px); }
+        .btn-outline { background:transparent; color:var(--text); border:1px solid var(--border); }
+        .btn-outline:hover { background:var(--surface-2); border-color:var(--primary); }
+        .btn-danger { background:var(--danger); color:white; }
+        .btn-danger:hover { background:#dc2626; }
+
+        .actions { display:flex; gap:0.6rem; flex-wrap:wrap; }
+
+        .search-bar { display:flex; gap:0.75rem; margin-bottom:1.5rem; }
+        .search-bar input { flex:1; padding:0.7rem 1rem; background:var(--surface); border:1px solid var(--border);
+                            border-radius:10px; color:var(--text); font-family:inherit; font-size:0.9rem; }
+        .search-bar input:focus { outline:none; border-color:var(--primary); }
+        .search-bar input::placeholder { color:var(--text-muted); }
+
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+
+        table { width:100%; border-collapse:collapse; }
+        thead { background:rgba(99,102,241,0.08); }
+        th { padding:0.9rem 1rem; text-align:left; font-size:0.75rem; font-weight:700;
+             color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid var(--border); }
+        td { padding:0.85rem 1rem; font-size:0.9rem; border-bottom:1px solid rgba(255,255,255,0.04); }
+        tr:last-child td { border-bottom:none; }
+        tr:hover td { background:rgba(255,255,255,0.03); }
+
+        .badge { padding:0.25rem 0.65rem; border-radius:20px; font-size:0.72rem; font-weight:700; }
+        .badge-green { background:rgba(16,185,129,0.15); color:var(--success); }
+        .badge-red { background:rgba(239,68,68,0.15); color:var(--danger); }
+        .badge-blue { background:rgba(6,182,212,0.15); color:var(--cyan); }
+
+        .empty-state { text-align:center; padding:4rem 2rem; color:var(--text-muted); }
+        .empty-state .icon { font-size:3.5rem; margin-bottom:1rem; }
+        .empty-state p { font-size:1.05rem; margin-bottom:1.5rem; }
+
+        .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+        .sum-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.1rem 1.3rem; }
+        .sum-card .label { font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem; }
+        .sum-card .value { font-size:1.8rem; font-weight:800; }
+        .sum-card .value.green { color:var(--success); }
+        .sum-card .value.purple { color:var(--primary); }
+        .sum-card .value.cyan { color:var(--cyan); }
+
+        #toast { position:fixed; bottom:2rem; right:2rem; background:var(--surface-2); border:1px solid var(--border);
+                 border-radius:12px; padding:0.9rem 1.4rem; font-size:0.9rem; font-weight:500;
+                 transform:translateY(100px); transition:transform 0.3s; z-index:999; }
+        #toast.show { transform:translateY(0); }
+        #toast.success { border-color:rgba(16,185,129,0.4); color:var(--success); }
+
+        @media(max-width:640px) { th:nth-child(3),td:nth-child(3),th:nth-child(4),td:nth-child(4) { display:none; } }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="brand">SmartMonitor</div>
+    <ul class="nav-links">
+        <li><a href="/">Dashboard</a></li>
+        <li><a href="/history" class="active">History</a></li>
+        <li><a href="/register">Register</a></li>
+        <li><a href="/behavior-detection">Behavior</a></li>
+    </ul>
+</nav>
+
+<div class="page">
+    <div class="page-header">
+        <div>
+            <div class="page-title">📊 Attendance History</div>
+            <div class="page-sub">All recorded attendance entries</div>
+        </div>
+        <div class="actions">
+            <a href="/api/export_attendance" class="btn btn-outline">📥 Export CSV</a>
+            <button class="btn btn-danger" onclick="confirmReset()">🔄 Reset Records</button>
+            <a href="/register" class="btn btn-primary">➕ Register</a>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+        <div class="sum-card"><div class="label">Total Records</div><div class="value purple" id="s-total">{{ records|length }}</div></div>
+        <div class="sum-card"><div class="label">Unique People</div><div class="value cyan" id="s-unique">—</div></div>
+        <div class="sum-card"><div class="label">Present</div><div class="value green" id="s-present">—</div></div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍  Search by name or roll number…" oninput="filterTable()">
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+        {% if records %}
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Roll / ID</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                {% for r in records %}
+                <tr>
+                    <td style="color:var(--text-muted)">{{ loop.index }}</td>
+                    <td style="font-weight:600">{{ r.get('Name', r.get('name', '—')) }}</td>
+                    <td style="color:var(--text-muted)">{{ r.get('Roll', r.get('roll', '—')) }}</td>
+                    <td><span class="badge badge-green">{{ r.get('Status', r.get('status', 'Present')) }}</span></td>
+                    <td style="color:var(--text-muted);font-size:0.82rem">{{ r.get('Timestamp', r.get('timestamp', '—')) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No attendance records yet.<br>Registered people will appear here once detected.</p>
+            <a href="/register" class="btn btn-primary">➕ Register First Person</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// Summary counts
+const rows = document.querySelectorAll('#tableBody tr');
+const names = new Set();
+let presentCount = 0;
+rows.forEach(r => {
+    const name = r.cells[1]?.textContent?.trim();
+    if (name) names.add(name);
+    presentCount++;
+});
+document.getElementById('s-unique').textContent = names.size;
+document.getElementById('s-present').textContent = presentCount;
+
+// Search filter
+function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#tableBody tr').forEach(r => {
+        const text = r.textContent.toLowerCase();
+        r.style.display = text.includes(q) ? '' : 'none';
+    });
+}
+
+// Reset
+async function confirmReset() {
+    if (!confirm('⚠️ Reset ALL attendance records? This cannot be undone.')) return;
+    try {
+        const r = await fetch('/api/reset_attendance', {method:'POST'});
+        const d = await r.json();
+        if (d.success) { showToast('✅ Records cleared!'); setTimeout(() => location.reload(), 1500); }
+    } catch(e) {}
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'show success';
+    setTimeout(() => t.className = '', 3000);
+}
+</script>
+</body>
+</html>

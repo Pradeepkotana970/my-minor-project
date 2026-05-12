@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Behavior Analytics Pro — Smart Monitoring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #050816;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --drowsy: #f97316;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--glass-border);
+        }
+        .logo { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .live-tag { background: rgba(239, 68, 68, 0.15); color: var(--danger); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 6px; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .live-dot { width: 8px; height: 8px; background: var(--danger); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 400px; gap: 2rem; }
+        @media (max-width: 1100px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+        .glass-card {
+            background: var(--glass); backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 24px;
+            padding: 2rem; transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        .glass-card:hover { border-color: rgba(255, 255, 255, 0.2); }
+
+        h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+
+        /* Video Feed */
+        .video-container { position: relative; width: 100%; border-radius: 20px; overflow: hidden; background: #000; border: 1px solid var(--glass-border); }
+        #liveFrame { width: 100%; display: block; min-height: 400px; object-fit: cover; }
+        .video-overlay { position: absolute; inset: 0; pointer-events: none; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+        .status-pill { align-self: flex-start; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); padding: 0.5rem 1rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; border: 1px solid var(--glass-border); }
+
+        .controls { margin-top: 1.5rem; display: flex; gap: 1rem; }
+        .btn { 
+            padding: 0.8rem 1.5rem; border-radius: 14px; border: none; cursor: pointer;
+            font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 8px 20px var(--primary-glow); }
+        .btn-primary:hover { background: #5254d4; transform: translateY(-2px); }
+        .btn-outline { background: var(--glass); color: white; border: 1px solid var(--glass-border); }
+        .btn-outline:hover { background: var(--glass-border); }
+
+        /* Metrics */
+        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem; }
+        .metric-box { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.25rem; }
+        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .metric-value { font-size: 1.5rem; font-weight: 700; }
+
+        /* Behavior Status */
+        .behavior-status { text-align: center; margin-bottom: 2rem; }
+        .behavior-icon { font-size: 4.5rem; margin-bottom: 1rem; filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3)); }
+        .behavior-name { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.25rem; }
+        .behavior-conf { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+
+        /* Analytics Section */
+        .stats-section { margin-top: 2rem; }
+        .chart-container { height: 220px; position: relative; }
+
+        /* Drawbacks & Improvements */
+        .reports-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+        @media (max-width: 800px) { .reports-grid { grid-template-columns: 1fr; } }
+
+        .report-card { padding: 1.5rem; border-radius: 20px; border: 1px solid var(--glass-border); height: 100%; }
+        .report-card.drawbacks { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2); }
+        .report-card.improvements { background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
+
+        .report-list { list-style: none; margin-top: 1rem; }
+        .report-item { margin-bottom: 0.75rem; display: flex; gap: 0.75rem; font-size: 0.9rem; line-height: 1.4; }
+        .report-item i { flex-shrink: 0; margin-top: 0.2rem; }
+
+        /* Alert Overlay */
+        #alertOverlay {
+            position: fixed; inset: 0; background: rgba(239, 68, 68, 0.2);
+            pointer-events: none; z-index: 1000; opacity: 0; transition: opacity 0.3s;
+            border: 10px solid var(--danger);
+        }
+        #alertOverlay.active { opacity: 1; animation: flash 1s infinite; }
+        @keyframes flash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; } }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 12px; backdrop-filter: blur(10px); z-index: 2000;
+            transform: translateY(150%); transition: transform 0.3s ease;
+        }
+        #toast.show { transform: translateY(0); }
+
+        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; margin-top: 1rem; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <div id="alertOverlay"></div>
+    <div id="toast"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">SmartMonitor PRO</div>
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                <div id="connectionStatus" class="status-pill">● System: Ready</div>
+                <div class="live-tag"><span class="live-dot"></span> LIVE ANALYSIS</div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Main Content: Stream -->
+            <div class="main-content">
+                <div class="glass-card">
+                    <h2>📹 Vision Stream</h2>
+                    <div class="video-container">
+                        <img id="liveFrame" src="" alt="Live feed">
+                        <div id="videoPlaceholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #050816;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">📷</div>
+                            <p style="color: var(--text-muted);">Camera feed idle. Start capture to begin.</p>
+                        </div>
+                        <div class="video-overlay">
+                            <div class="status-pill" id="overlayStatus" style="display: none;">Drowsiness Alert System Active</div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn btn-primary" id="startBtn" onclick="startCapture()">▶ Start Monitoring</button>
+                        <button class="btn btn-outline" id="stopBtn" onclick="stopCapture()" disabled>⏹ Stop</button>
+                        <button class="btn btn-outline" onclick="location.reload()">↺ Refresh</button>
+                        <button class="btn btn-outline" id="muteBtn" onclick="toggleMute()">🔊 Unmuted</button>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <div class="metric-label">Motion Intensity</div>
+                            <div class="metric-value" id="motionVal">0.00</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Eye state</div>
+                            <div class="metric-value" id="eyeStatus">N/A</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Blink Rate (Ratio)</div>
+                            <div class="metric-value" id="blinkRate">0.0%</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Confidence</div>
+                            <div class="metric-value" id="confScore">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reports-grid">
+                    <div class="report-card drawbacks">
+                        <h3>🚩 Behavioral Drawbacks</h3>
+                        <ul class="report-list" id="drawbacksList">
+                            <li class="report-item" style="color: var(--text-muted);">No data collected yet...</li>
+                        </ul>
+                    </div>
+                    <div class="report-card improvements">
+                        <h3>💡 Improvement Tips</h3>
+                        <ul class="report-list" id="improvementsList">
+                            <li class="report-item" style="color: var(--text-muted);">No data collected yet...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar: Analytics -->
+            <div class="sidebar">
+                <div class="glass-card">
+                    <div class="behavior-status">
+                        <div class="behavior-icon" id="behaviorIcon">🤖</div>
+                        <div class="behavior-name" id="behaviorName">Ready</div>
+                        <div class="behavior-conf" id="behaviorDesc">System initialized.</div>
+                        <div class="progress-container">
+                            <div id="healthBar" class="progress-bar" style="background: var(--primary); width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h2>📊 Session Distribution</h2>
+                        <div class="chart-container">
+                            <canvas id="distChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h2>🧬 Engagement Health</h2>
+                        <div style="font-size: 2.5rem; font-weight: 800; color: var(--success);" id="healthStatus">---</div>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">Overall score based on real-time behavior patterns.</p>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-outline" style="width: 100%; justify-content: center;" onclick="generateFullReport()">📥 Generate Full Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="alertSound" src="/static/alert.wav" preload="auto"></audio>
+
+    <script>
+        let isCapturing = false;
+        let captureInterval = null;
+        let behaviorHistory = [];
+        let isMuted = false;
+        let distChart = null;
+        const API_BASE = '/api/v1/behavior';
+
+        // Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('distChart').getContext('2d');
+            distChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Dull', 'Drowsy', 'Sleepy'],
+                    datasets: [{
+                        data: [1, 0, 0, 0],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10, weight: '600' }, padding: 15 } }
+                    }
+                }
+            });
+        }
+
+        async function startCapture() {
+            try {
+                const response = await fetch(`${API_BASE}/start-capture`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ camera_id: 0 })
+                });
+
+                if (!response.ok) throw new Error('Camera access denied');
+
+                isCapturing = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('videoPlaceholder').style.display = 'none';
+                document.getElementById('overlayStatus').style.display = 'block';
+                document.getElementById('connectionStatus').textContent = '● System: Monitoring';
+                document.getElementById('connectionStatus').style.color = 'var(--success)';
+                
+                showToast('🚀 Monitoring started successfully', 'success');
+                captureInterval = setInterval(captureAndAnalyze, 100); 
+                updateReportInterval = setInterval(updateReport, 3000);
+            } catch (error) {
+                showToast('❌ ' + error.message, 'error');
+            }
+        }
+
+        async function captureAndAnalyze() {
+            try {
+                const response = await fetch(`${API_BASE}/analyze-frame`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const res = data.data;
+                    
+                    // Update Frame
+                    if (res.frame) {
+                        document.getElementById('liveFrame').src = `data:image/jpeg;base64,${res.frame}`;
+                    }
+
+                    // Update UI
+                    updateRealtimeUI(res);
+                    
+                    // Track History
+                    behaviorHistory.push(res);
+                    if (behaviorHistory.length > 300) behaviorHistory.shift(); // Keep last 30 seconds
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateRealtimeUI(res) {
+            const state = res.behavior;
+            const conf = res.confidence;
+            
+            document.getElementById('behaviorName').textContent = state;
+            document.getElementById('confScore').textContent = Math.round(conf) + '%';
+            document.getElementById('behaviorDesc').textContent = `Detected with ${Math.round(conf)}% confidence`;
+            document.getElementById('motionVal').textContent = res.motion.toFixed(2);
+            document.getElementById('eyeStatus').textContent = res.eyes_closed ? '🔴 Closed' : '🟢 Open';
+            document.getElementById('blinkRate').textContent = (res.eye_closure_ratio * 100).toFixed(1) + '%';
+
+            // Icons & Colors
+            const iconEl = document.getElementById('behaviorIcon');
+            const nameEl = document.getElementById('behaviorName');
+            const overlay = document.getElementById('alertOverlay');
+            const audio = document.getElementById('alertSound');
+            const healthBar = document.getElementById('healthBar');
+
+            let color = 'var(--primary)';
+            let icon = '🤖';
+
+            overlay.classList.remove('active');
+
+            if (state === 'Active') {
+                color = 'var(--success)'; icon = '😊';
+                healthBar.style.width = '100%'; healthBar.style.background = color;
+            } else if (state === 'Dull') {
+                color = 'var(--warning)'; icon = '😐';
+                healthBar.style.width = '60%'; healthBar.style.background = color;
+            } else if (state === 'Drowsy') {
+                color = 'var(--drowsy)'; icon = '🥱';
+                healthBar.style.width = '40%'; healthBar.style.background = color;
+                overlay.classList.add('active');
+                if (!isMuted) audio.play().catch(e => {});
+            } else if (state === 'Sleepy') {
+                color = 'var(--danger)'; icon = '😴';
+                healthBar.style.width = '20%'; healthBar.style.background = color;
+                overlay.classList.add('active');
+                if (!isMuted) audio.play().catch(e => {});
+            }
+
+            iconEl.textContent = icon;
+            iconEl.style.filter = `drop-shadow(0 0 20px ${color})`;
+            nameEl.style.color = color;
+        }
+
+        async function updateReport() {
+            if (behaviorHistory.length < 5) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/report`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ behavior_data: behaviorHistory })
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const report = data.data;
+                    
+                    // Update Chart
+                    distChart.data.datasets[0].data = [
+                        report.summary.active_percentage,
+                        report.summary.dull_percentage,
+                        report.summary.drowsy_percentage,
+                        report.summary.sleepy_percentage
+                    ];
+                    distChart.update();
+
+                    // Update Health Status
+                    document.getElementById('healthStatus').textContent = Math.round(report.summary.active_percentage) + '%';
+                    
+                    // Update Lists
+                    renderList('drawbacksList', report.drawbacks, '🚩');
+                    renderList('improvementsList', report.recommendations, '💡');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderList(id, items, emoji) {
+            const el = document.getElementById(id);
+            if (!items || items.length === 0) {
+                el.innerHTML = `<li class="report-item" style="color: var(--text-muted);">Analyzing patterns...</li>`;
+                return;
+            }
+            el.innerHTML = items.map(item => `
+                <li class="report-item">
+                    <i>${emoji}</i>
+                    <span>${item}</span>
+                </li>
+            `).join('');
+        }
+
+        function stopCapture() {
+            isCapturing = false;
+            clearInterval(captureInterval);
+            clearInterval(updateReportInterval);
+            
+            fetch(`${API_BASE}/stop-capture`, { method: 'POST' });
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('videoPlaceholder').style.display = 'flex';
+            document.getElementById('overlayStatus').style.display = 'none';
+            document.getElementById('connectionStatus').textContent = '● System: Idle';
+            document.getElementById('connectionStatus').style.color = 'var(--text-muted)';
+            
+            showToast('🛑 Monitoring stopped', 'info');
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('muteBtn').textContent = isMuted ? '🔇 Muted' : '🔊 Unmuted';
+            document.getElementById('muteBtn').className = isMuted ? 'btn btn-outline' : 'btn btn-primary';
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'show';
+            if (type === 'error') t.style.borderColor = 'var(--danger)';
+            else if (type === 'success') t.style.borderColor = 'var(--success)';
+            else t.style.borderColor = 'var(--primary)';
+            
+            setTimeout(() => t.className = '', 4000);
+        }
+
+        function generateFullReport() {
+            if (behaviorHistory.length === 0) {
+                showToast('❌ No data available yet', 'error');
+                return;
+            }
+            showToast('📄 Report generation in progress...', 'success');
+            // In a real app, this would trigger a PDF download or a new page
+        }
+
+        // Handle page close
+        window.onbeforeunload = () => { if (isCapturing) stopCapture(); };
+
+        // Start
+        window.onload = initChart;
+    </script>
+</body>
+</html>

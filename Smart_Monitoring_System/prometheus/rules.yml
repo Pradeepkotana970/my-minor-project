@@ -1,0 +1,379 @@
+# Prometheus Alert Rules for Smart Monitoring System
+# Save as: prometheus/rules.yml
+
+groups:
+  # System Performance Alerts
+  - name: performance_alerts
+    interval: 30s
+    rules:
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: node_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "High CPU usage detected on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: node_memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # Low Disk Space
+      - alert: LowDiskSpace
+        expr: node_filesystem_avail_percent < 10
+        for: 10m
+        labels:
+          severity: critical
+          service: monitoring-system
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "{{ $value }}% disk space available"
+
+      # High Temperature
+      - alert: HighSystemTemperature
+        expr: node_hwmon_temp_celsius > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "System temperature is high"
+          description: "Temperature is {{ $value }}°C on {{ $labels.instance }}"
+
+  # Network Alerts
+  - name: network_alerts
+    interval: 30s
+    rules:
+      # High Network Latency
+      - alert: HighNetworkLatency
+        expr: probe_http_duration_seconds > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "High latency detected"
+          description: "HTTP request latency is {{ $value }}s"
+
+      # Network Connection Failed
+      - alert: NetworkConnectionFailed
+        expr: probe_http_status != 200
+        for: 2m
+        labels:
+          severity: critical
+          service: monitoring-system
+        annotations:
+          summary: "Network connection failed to {{ $labels.target }}"
+          description: "HTTP status code: {{ $value }}"
+
+      # SSL Certificate Expiring Soon
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 7 * 24 * 3600
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "SSL certificate expiring soon for {{ $labels.instance }}"
+          description: "Certificate expires in {{ $value | humanize }}s"
+
+  # Application Performance Alerts
+  - name: application_alerts
+    interval: 15s
+    rules:
+      # Low FPS
+      - alert: LowFrameRate
+        expr: monitoring_fps < 15
+        for: 2m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Frame rate is low"
+          description: "Current FPS: {{ $value }} (threshold: 15)"
+
+      # High Latency
+      - alert: HighDetectionLatency
+        expr: monitoring_latency_ms > 100
+        for: 2m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Frame processing latency is high"
+          description: "Current latency: {{ $value }}ms (threshold: 100ms)"
+
+      # Low Recognition Confidence
+      - alert: LowRecognitionConfidence
+        expr: monitoring_recognition_confidence < 60
+        for: 5m
+        labels:
+          severity: info
+          service: monitoring-system
+        annotations:
+          summary: "Recognition confidence is low"
+          description: "Confidence: {{ $value }}% (threshold: 60%)"
+
+      # High False Positive Rate
+      - alert: HighFalsePositiveRate
+        expr: monitoring_false_positive_rate > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "High false positive rate detected"
+          description: "False positive rate: {{ $value | humanizePercentage }}"
+
+  # Service Availability Alerts
+  - name: service_alerts
+    interval: 30s
+    rules:
+      # Service Down
+      - alert: MonitoringServiceDown
+        expr: up{job="monitoring-system"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: monitoring-system
+        annotations:
+          summary: "Monitoring service is down"
+          description: "Monitoring service on {{ $labels.instance }} is not responding"
+
+      # Database Connection Failure
+      - alert: DatabaseConnectionFailed
+        expr: monitoring_db_connection_errors_total > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: monitoring-system
+        annotations:
+          summary: "Database connection failures detected"
+          description: "Connection errors: {{ $value }}"
+
+      # Redis Connection Failure
+      - alert: RedisConnectionFailed
+        expr: redis_connected_clients == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: monitoring-system
+        annotations:
+          summary: "Redis connection failed"
+          description: "Cannot connect to Redis service"
+
+      # API Response Time Too High
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "API response time is high"
+          description: "95th percentile response time: {{ $value }}s"
+
+  # Camera & Face Detection Alerts
+  - name: face_detection_alerts
+    interval: 20s
+    rules:
+      # No Faces Detected
+      - alert: NoFacesDetected
+        expr: rate(monitoring_faces_detected_total[5m]) == 0
+        for: 10m
+        labels:
+          severity: info
+          service: monitoring-system
+        annotations:
+          summary: "No faces detected for extended period"
+          description: "No faces detected in last 5 minutes"
+
+      # High Number of Unknown Persons
+      - alert: TooManyUnknownPersons
+        expr: monitoring_unknown_persons_count > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "High number of unknown persons"
+          description: "Unknown persons count: {{ $value }}"
+
+      # Camera Feed Error
+      - alert: CameraFeedError
+        expr: monitoring_camera_errors_total > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: monitoring-system
+        annotations:
+          summary: "Camera feed error detected"
+          description: "Camera errors: {{ $value }}"
+
+      # Lighting Conditions Poor
+      - alert: PoorLightingConditions
+        expr: monitoring_lighting_conditions < 0.3
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Poor lighting conditions detected"
+          description: "Lighting condition score: {{ $value }}"
+
+  # Behavior Analysis Alerts
+  - name: behavior_alerts
+    interval: 1m
+    rules:
+      # Excessive Sleep Detected
+      - alert: ExcessiveSleepDetected
+        expr: monitoring_sleep_events_total > 5
+        for: 10m
+        labels:
+          severity: info
+          service: monitoring-system
+        annotations:
+          summary: "Excessive sleep detected"
+          description: "Person is sleeping frequently. Sleep events: {{ $value }}"
+
+      # High Idle Rate
+      - alert: HighIdleRate
+        expr: rate(monitoring_idle_time_seconds[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: info
+          service: monitoring-system
+        annotations:
+          summary: "High idle rate detected"
+          description: "Person is idle more than 50% of the time"
+
+      # Low Engagement
+      - alert: LowEngagement
+        expr: monitoring_engagement_score < 30
+        for: 10m
+        labels:
+          severity: info
+          service: monitoring-system
+        annotations:
+          summary: "Low engagement detected"
+          description: "Engagement score: {{ $value }}/100"
+
+  # Alert System Alerts
+  - name: alert_system_alerts
+    interval: 30s
+    rules:
+      # Alert Queue Backlog
+      - alert: AlertQueueBacklog
+        expr: monitoring_alert_queue_size > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Alert queue backlog"
+          description: "Alert queue size: {{ $value }} (threshold: 100)"
+
+      # Alert Delivery Failure
+      - alert: AlertDeliveryFailure
+        expr: rate(monitoring_alert_delivery_failures_total[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Alert delivery failures detected"
+          description: "Failure rate: {{ $value | humanizePercentage }}"
+
+      # SMS Alert Quota Low
+      - alert: SMSQuotaLow
+        expr: monitoring_sms_quota_remaining < 100
+        for: 1h
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "SMS quota is running low"
+          description: "Remaining SMS quota: {{ $value }}"
+
+  # Database Alerts
+  - name: database_alerts
+    interval: 1m
+    rules:
+      # Database Slow Query
+      - alert: DatabaseSlowQuery
+        expr: rate(pg_stat_statements_mean_exec_time[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Slow database query detected"
+          description: "Mean query time: {{ $value }}ms"
+
+      # Database Table Size Too Large
+      - alert: DatabaseTableTooLarge
+        expr: pg_table_size_bytes > 1e9
+        for: 10m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Database table size is large"
+          description: "Table size: {{ $value | humanize }}B"
+
+      # Database Connection Pool Exhaustion
+      - alert: DatabaseConnectionPoolNearLimit
+        expr: pg_connected_clients > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "Database connection pool near limit"
+          description: "Connected clients: {{ $value }}/100"
+
+  # GPU Alerts
+  - name: gpu_alerts
+    interval: 30s
+    rules:
+      # GPU Memory Full
+      - alert: GPUMemoryFull
+        expr: nvidia_smi_memory_used_percent > 95
+        for: 5m
+        labels:
+          severity: critical
+          service: monitoring-system
+        annotations:
+          summary: "GPU memory almost full"
+          description: "GPU memory usage: {{ $value }}%"
+
+      # GPU Temperature High
+      - alert: GPUTemperatureHigh
+        expr: nvidia_smi_temperature_gpu > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: monitoring-system
+        annotations:
+          summary: "GPU temperature is high"
+          description: "GPU temperature: {{ $value }}°C"
+
+      # GPU Utilization Low
+      - alert: GPUUtilizationLow
+        expr: nvidia_smi_utilization_gpu < 10
+        for: 10m
+        labels:
+          severity: info
+          service: monitoring-system
+        annotations:
+          summary: "GPU utilization is low"
+          description: "GPU utilization: {{ $value }}%"

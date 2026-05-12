@@ -1,0 +1,561 @@
+# Kubernetes Deployment Manifests for Smart Monitoring System
+# Save as: kubernetes/monitoring-system.yaml
+
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring-system
+  labels:
+    name: monitoring-system
+
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-config
+  namespace: monitoring-system
+data:
+  config.py: |
+    # Application configuration
+    CAMERA_WIDTH = 1280
+    CAMERA_HEIGHT = 720
+    FACE_DETECTION_SCALE_FACTOR = 1.1
+    FACE_DETECTION_MIN_NEIGHBORS = 5
+    CONFIDENCE_THRESHOLD = 70
+    SLEEP_THRESHOLD = 3.0
+    IDLE_THRESHOLD = 5.0
+    ALERT_COOLDOWN = 5
+    DATABASE_TYPE = "postgresql"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: monitoring-secrets
+  namespace: monitoring-system
+type: Opaque
+stringData:
+  DB_PASSWORD: "your-secure-password"
+  DB_USER: "monitoring"
+  TWILIO_ACCOUNT_SID: "your-twilio-sid"
+  TWILIO_AUTH_TOKEN: "your-twilio-token"
+  TWILIO_PHONE_NUMBER: "+1234567890"
+  SMTP_PASSWORD: "your-email-password"
+
+---
+# PersistentVolume for data storage
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: monitoring-data-pv
+  namespace: monitoring-system
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  hostPath:
+    path: "/mnt/data/monitoring"
+
+---
+# PersistentVolumeClaim for application data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: monitoring-data-pvc
+  namespace: monitoring-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# PersistentVolumeClaim for logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: monitoring-logs-pvc
+  namespace: monitoring-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# StatefulSet for Monitoring System pods
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: monitoring-system
+  namespace: monitoring-system
+spec:
+  serviceName: monitoring-system
+  replicas: 3
+  selector:
+    matchLabels:
+      app: monitoring-system
+  template:
+    metadata:
+      labels:
+        app: monitoring-system
+        version: "2.0"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - monitoring-system
+                topologyKey: kubernetes.io/hostname
+      
+      containers:
+        - name: monitoring-app
+          image: monitoring-system:2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+              name: http
+              protocol: TCP
+          
+          env:
+            - name: FLASK_ENV
+              value: "production"
+            - name: DATABASE_URL
+              value: "postgresql://$(DB_USER)@postgres:5432/monitoring"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-secrets
+                  key: DB_PASSWORD
+            - name: REDIS_URL
+              value: "redis://redis:6379/0"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+            - name: data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+            - name: camera
+              mountPath: /dev/video0
+          
+          # Resource requests and limits
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          # Startup probe
+          startupProbe:
+            httpGet:
+              path: /api/status
+              port: 5000
+            failureThreshold: 30
+            periodSeconds: 10
+      
+      volumes:
+        - name: config
+          configMap:
+            name: monitoring-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: monitoring-data-pvc
+        - name: logs
+          persistentVolumeClaim:
+            claimName: monitoring-logs-pvc
+        - name: camera
+          hostPath:
+            path: /dev/video0
+
+---
+# Service for internal communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: monitoring-system
+  namespace: monitoring-system
+  labels:
+    app: monitoring-system
+spec:
+  clusterIP: None
+  selector:
+    app: monitoring-system
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      name: http
+
+---
+# LoadBalancer Service for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: monitoring-system-lb
+  namespace: monitoring-system
+  labels:
+    app: monitoring-system
+spec:
+  type: LoadBalancer
+  selector:
+    app: monitoring-system
+  ports:
+    - port: 80
+      targetPort: 5000
+      protocol: TCP
+      name: http
+    - port: 443
+      targetPort: 5000
+      protocol: TCP
+      name: https
+
+---
+# HorizontalPodAutoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: monitoring-system-hpa
+  namespace: monitoring-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: monitoring-system
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
+
+---
+# Deployment for PostgreSQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: monitoring-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-secrets
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-secrets
+                  key: DB_PASSWORD
+            - name: POSTGRES_DB
+              value: "monitoring"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+
+---
+# Service for PostgreSQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: monitoring-system
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+# Deployment for Redis
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: monitoring-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          command:
+            - redis-server
+            - "--appendonly"
+            - "yes"
+            - "--maxmemory"
+            - "512mb"
+            - "--maxmemory-policy"
+            - "allkeys-lru"
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+      volumes:
+        - name: redis-data
+          emptyDir: {}
+
+---
+# Service for Redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: monitoring-system
+spec:
+  clusterIP: None
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+
+---
+# NetworkPolicy to restrict traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-network-policy
+  namespace: monitoring-system
+spec:
+  podSelector:
+    matchLabels:
+      app: monitoring-system
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: monitoring-system
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 5000
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: monitoring-system
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - monitoring.example.com
+      secretName: monitoring-tls
+  rules:
+    - host: monitoring.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: monitoring-system-lb
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: monitoring-system-lb
+                port:
+                  number: 80
+          - path: /video_feed
+            pathType: Prefix
+            backend:
+              service:
+                name: monitoring-system-lb
+                port:
+                  number: 80
+
+---
+# RBAC ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: monitoring-system
+  namespace: monitoring-system
+
+---
+# RBAC Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: monitoring-system
+  namespace: monitoring-system
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]
+
+---
+# RBAC RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: monitoring-system
+  namespace: monitoring-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: monitoring-system
+subjects:
+  - kind: ServiceAccount
+    name: monitoring-system
+    namespace: monitoring-system
